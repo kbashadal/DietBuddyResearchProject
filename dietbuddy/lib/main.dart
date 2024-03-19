@@ -466,7 +466,7 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            const AddEntryPage()), // Assuming AddNewEntryPage exists
+                            const MealOptionsPage()), // Assuming AddNewEntryPage exists
                   );
                 },
                 child: const Text(
@@ -560,7 +560,10 @@ class MealData {
 }
 
 class AddEntryPage extends StatefulWidget {
-  const AddEntryPage({Key? key}) : super(key: key);
+  final String rowItemName; // Add this line
+
+  const AddEntryPage({Key? key, required this.rowItemName})
+      : super(key: key); // Modify this line
 
   @override
   AddEntryPageState createState() => AddEntryPageState();
@@ -568,12 +571,297 @@ class AddEntryPage extends StatefulWidget {
 
 class AddEntryPageState extends State<AddEntryPage> {
   final ImagePicker _picker = ImagePicker();
-  // Other state variables can be defined here
+  String? selectedCategory;
+  String? selectedItem;
+  List<dynamic> categories = [];
+  List<dynamic> items = [];
+  String? mealType;
+  String? volumeInput; // Variable to store the volume input by the user
+  String? caffeineInput; // Variable to store the caffeine input by the user
+  String?
+      per100gramsInput; // Variable to store the per 100 grams input by the user
+  int quantity = 1; // Initialize quantity with a default value of 1
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCategories();
+    mealType = widget.rowItemName;
+  }
 
   Future<void> _pickImage() async {
     // Implement image picking logic
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     // Handle the picked image
+  }
+
+  Future<void> fetchItems(String category) async {
+    final response = await http.get(
+        Uri.parse('http://localhost:5000/food_items_by_category/$category'));
+    if (response.statusCode == 200) {
+      final List<dynamic> fetchedItems = jsonDecode(response.body);
+      setState(() {
+        items = fetchedItems;
+      });
+    } else {
+      // Handle server error
+      if (kDebugMode) {
+        print('Failed to load items for category $category');
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>?> sendDataToAPI() async {
+    // Define the list of categories that require volume and caffeine input
+    const List<String> volumeAndCaffeineCategories = [
+      "Coffee",
+      "Energy Drinks",
+      "Soft Drinks",
+      "Tea",
+      "Water"
+    ];
+
+    // Check if the selectedCategory is in the list
+    final bool isVolumeAndCaffeineCategory =
+        volumeAndCaffeineCategories.contains(selectedCategory);
+
+    // Prepare the data to be sent to the Flask API based on the category
+    final Map<String, dynamic> dataToSend;
+    String endpoint;
+
+    if (isVolumeAndCaffeineCategory) {
+      // Use volume and caffeine fields
+      dataToSend = {
+        'drink': selectedItem,
+        'selectedCategory': selectedCategory,
+        'Volume (ml)': volumeInput,
+        'Caffeine (mg)': caffeineInput,
+      };
+      endpoint = 'http://127.0.0.1:5000/predictdrink';
+    } else {
+      // Use weight field instead
+      dataToSend = {
+        'FoodItem': selectedItem,
+        'selectedCategory': selectedCategory,
+        'per100grams':
+            per100gramsInput, // Assuming you have a variable for weight input
+      };
+      endpoint =
+          'http://127.0.0.1:5000/predictNonDrink'; // Assuming a different endpoint for non-volume/caffeine categories
+    }
+
+    // Call the Flask API
+    final url = Uri.parse(endpoint);
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(dataToSend),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      return responseData; // Return the decoded response data
+    } else {
+      // Handle error or invalid response
+      if (kDebugMode) {
+        print('Error: ${response.body}');
+      }
+      return null;
+    }
+    // Handle the response...
+  }
+
+  Future<void> fetchCategories() async {
+    final response =
+        await http.get(Uri.parse('http://127.0.0.1:5000/food_categories'));
+    if (response.statusCode == 200) {
+      final List<dynamic> fetchedCategories = jsonDecode(response.body);
+      setState(() {
+        categories = fetchedCategories;
+      });
+    } else {
+      // Handle server error
+      if (kDebugMode) {
+        print('Failed to load categories');
+      }
+    }
+  }
+
+  Future<void> _addManualEntry() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button to close the dialog
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            // Define the categories that require volume and caffeine input
+            const List<String> volumeAndCaffeineCategories = [
+              "Coffee",
+              "Energy Drinks",
+              "Soft Drinks",
+              "Tea",
+              "Water"
+            ];
+
+            return AlertDialog(
+              title: const Text('Add Entry'),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: <Widget>[
+                    const Text('You can add a new entry manually.'),
+                    Text('Meal Type: $mealType',
+                        style: const TextStyle(
+                            fontSize: 20)), // Display the meal type
+
+                    DropdownButton<String>(
+                      hint: const Text('Select Category'),
+                      value: selectedCategory,
+                      onChanged: (String? newValue) async {
+                        selectedItem = null; // Reset item selection
+                        await fetchItems(
+                            newValue!); // Fetch items for the selected category
+                        setState(() {
+                          selectedCategory = newValue;
+                        });
+                      },
+                      items: categories
+                          .map<DropdownMenuItem<String>>((dynamic category) {
+                        return DropdownMenuItem<String>(
+                          value: category['name'],
+                          child: Text(category['name']),
+                        );
+                      }).toList(),
+                    ),
+                    if (items.isNotEmpty) ...[
+                      DropdownButton<String>(
+                        hint: const Text('Select Item'),
+                        value: selectedItem,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedItem = newValue;
+                          });
+                        },
+                        items:
+                            items.map<DropdownMenuItem<String>>((dynamic item) {
+                          return DropdownMenuItem<String>(
+                            value: item['name'],
+                            child: Text(item['name']),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                    if (selectedItem != null &&
+                        volumeAndCaffeineCategories
+                            .contains(selectedCategory)) ...[
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Volume (ml)',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        onChanged: (value) {
+                          volumeInput = value;
+                          setState(() {
+                            volumeInput =
+                                value; // Ensure this updates volumeInput
+                          });
+                        },
+                      ),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Caffeine (mg)',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        onChanged: (value) {
+                          caffeineInput = value;
+                          setState(() {
+                            caffeineInput =
+                                value; // Ensure this updates caffeineInput
+                          });
+                        },
+                      ),
+                    ] else if (selectedItem != null) ...[
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Weight (g)',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        onChanged: (value) {
+                          per100gramsInput = value;
+                          setState(() {
+                            per100gramsInput =
+                                value; // Ensure this updates caffeineInput
+                          });
+                        },
+                      ),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          onPressed: () {
+                            if (quantity > 1) {
+                              setState(() {
+                                quantity--;
+                              });
+                            }
+                          },
+                        ),
+                        Text('$quantity'),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            setState(() {
+                              quantity++;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(); // Dismiss the dialog
+                  },
+                ),
+                TextButton(
+                  child: const Text('Add'),
+                  onPressed: () async {
+                    final response = await sendDataToAPI();
+                    if (!mounted) {
+                      return; // Check if the widget is still mounted
+                    }
+                    if (response != null) {
+                      Navigator.of(context)
+                          .pop(); // Use context instead of dialogContext
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddEntryPage(
+                              rowItemName: mealType ?? 'DefaultMealType'),
+                        ),
+                      );
+                    } else {
+                      // Optionally, handle the case where response is null, e.g., show an error message
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -593,9 +881,7 @@ class AddEntryPageState extends State<AddEntryPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: () {
-                      // Navigate to manual entry page or dialog
-                    },
+                    onPressed: _addManualEntry,
                     child: const Column(
                       children: [
                         Icon(Icons.add),
@@ -623,6 +909,51 @@ class AddEntryPageState extends State<AddEntryPage> {
             // ... Implement Awards section based on the design
           ],
         ),
+      ),
+    );
+  }
+}
+
+class MealOptionsPage extends StatefulWidget {
+  const MealOptionsPage({Key? key}) : super(key: key);
+
+  @override
+  MealOptionsPageState createState() => MealOptionsPageState();
+}
+
+class MealOptionsPageState extends State<MealOptionsPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Select Meal Type'),
+      ),
+      body: ListView(
+        children: <Widget>[
+          _buildOptionTile('Breakfast'),
+          _buildOptionTile('Lunch'),
+          _buildOptionTile('Dinner'),
+          _buildOptionTile('Others'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionTile(String title) {
+    return ListTile(
+      leading: const Icon(Icons.restaurant),
+      title: Text(title),
+      trailing: IconButton(
+        icon: const Icon(Icons.add),
+        onPressed: () {
+          // Modify this block to pass the title
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    AddEntryPage(rowItemName: title)), // Modify this line
+          );
+        },
       ),
     );
   }

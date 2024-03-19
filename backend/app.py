@@ -239,16 +239,24 @@ def user_meals_summary_by_email():
     
 @app.route('/food_items_by_category/<category_name>', methods=['GET'])
 def get_food_items_by_category(category_name):
-    food_items = FoodItems.query.join(FoodCategory).filter(FoodCategory.name == category_name).all()
-    if food_items:
-        return jsonify({'food_items': [item.FoodItemName for item in food_items]}), 200
+    print("category_name", category_name)
+    # Use distinct() to fetch only unique records based on FoodItemName
+    food_items = FoodItems.query.join(FoodCategory).filter(FoodCategory.name == category_name).distinct(FoodItems.FoodItemName).all()
+    all_food_items = [{'id': item.id, 'name': item.FoodItemName} for item in food_items]
+    if all_food_items:
+        return jsonify(all_food_items), 200
     else:
         return jsonify({'message': 'No food items found for the given category.'}), 404
-    
+@app.route('/food_categories', methods=['GET'])
+def get_food_categories():
+    categories = FoodCategory.query.all()
+    categories_list = [{'id': category.id, 'name': category.name} for category in categories]
+    return jsonify(categories_list)    
 @app.route('/predictdrink', methods=['POST'])
 def predictdrink():
     model = joblib.load('caffeine_calories_predictor_rf.pkl')
     data = request.get_json(force=True)
+    print("data",data)
     # Prepare the input data frame
     input_df = pd.DataFrame({
         'drink': [data['drink']],
@@ -256,17 +264,20 @@ def predictdrink():
         'Caffeine (mg)': [data['Caffeine (mg)']]
     })
     prediction = model.predict(input_df)
+    print("prediction",prediction)
     return jsonify({'calories': prediction[0]})
 
 @app.route('/predictNonDrink', methods=['POST'])
 def predictNonDrink():
     model = joblib.load('fooditem_calories_predictor.pkl')
     data = request.get_json()
+    print("data",data)
     # Assuming the input is a list of food items    
     input_df = pd.DataFrame({
         'FoodItem': [data['FoodItem']],
         'per100grams': [data['per100grams']]    })
     predictions = model.predict(input_df)
+    print("predictions",predictions)
     return jsonify({'calories': predictions[0]})
 
 @app.route('/suggestExecise', methods=['POST'])
