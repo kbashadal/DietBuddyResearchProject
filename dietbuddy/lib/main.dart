@@ -526,7 +526,7 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                               const EdgeInsets.only(right: 2.0, bottom: 2.0),
                           showMeasures: true,
                           legendDefaultMeasure:
-                              charts.LegendDefaultMeasure.firstValue,
+                              charts.LegendDefaultMeasure.lastValue,
                           entryTextStyle: charts.TextStyleSpec(
                               color: charts.MaterialPalette.gray.shadeDefault,
                               fontFamily: 'Georgia',
@@ -544,7 +544,7 @@ class MealSummaryPageState extends State<MealSummaryPage> {
 
   List<charts.Series<MealData, String>> _createChartData() {
     final List<MealData> dataList = _mealData.entries
-        .map((entry) => MealData(entry.key, entry.value, 0, 0, ''))
+        .map((entry) => MealData(entry.key, entry.value, 0, 0, entry.key))
         .toList();
 
     List<charts.Series<MealData, String>> seriesList = [];

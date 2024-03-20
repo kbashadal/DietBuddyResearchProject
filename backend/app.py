@@ -319,6 +319,8 @@ def total_calories_by_email_and_type():
 
 @app.route('/user_meals_summary_by_email', methods=['GET'])
 def user_meals_summary_by_email():
+    from datetime import date
+
     email_id = request.args.get('email_id')
     if not email_id:
         return jsonify({'error': 'Missing email_id parameter'}), 400
@@ -328,17 +330,17 @@ def user_meals_summary_by_email():
     if not user:
         return jsonify({'message': 'User not found.'}), 404
 
-    # Query to fetch user meals and join with MealType to categorize them
-    print("user",user)
+    # Query to fetch user meals for today and join with MealType to categorize them
+    today_date = date.today()
     user_meals = db.session.query(
         UserMeals, MealType.name.label('meal_type_name')
     ).join(MealType, UserMeals.meal_type_id == MealType.id
-    ).filter(UserMeals.user_id == user.id).all()
+    ).filter(UserMeals.user_id == user.id, UserMeals.date == today_date).all()
 
     if not user_meals:
-        return jsonify({'message': 'No meals found for the given user email.'}), 404
+        return jsonify({'message': 'No meals found for the given user email for today.'}), 404
 
-    # Summarize calories by meal type
+    # Summarize calories by meal type for today
     summary = {}
     for user_meal, meal_type_name in user_meals:
         if meal_type_name not in summary:
@@ -346,7 +348,6 @@ def user_meals_summary_by_email():
         summary[meal_type_name] += round(user_meal.calories,2) if user_meal.calories else 0
     print("summary",summary)
     return jsonify({'email_id': email_id, 'calories_summary_by_meal_type': summary}), 200    
-    
 @app.route('/food_items_by_category/<category_name>', methods=['GET'])
 def get_food_items_by_category(category_name):
     print("category_name", category_name)
