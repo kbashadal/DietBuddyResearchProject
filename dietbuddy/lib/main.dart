@@ -130,7 +130,7 @@ class RegistrationPageState extends State<RegistrationPage> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImageProfile() async {
     final ImagePicker picker = ImagePicker(); // Renamed _picker to picker
     // Pick an image
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -305,7 +305,7 @@ class RegistrationPageState extends State<RegistrationPage> {
             const SizedBox(height: 20),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: _pickImage, // Update this line
+              onPressed: _pickImageProfile, // Update this line
               child: const Text('Upload Profile Pic'),
             ),
             if (_image != null) Image.file(_image!),
@@ -642,6 +642,8 @@ class AddEntryPageState extends State<AddEntryPage> {
       per100gramsInput; // Variable to store the per 100 grams input by the user
   int quantity = 1; // Initialize quantity with a default value of 1
   late Future<Map<String, List<MealData>>> _sendDataToAPIFuture;
+  Map<String, dynamic>? predictedImageCaloriesWithFoodItem;
+
   @override
   void initState() {
     super.initState();
@@ -682,10 +684,55 @@ class AddEntryPageState extends State<AddEntryPage> {
     }
   }
 
-  Future<void> _pickImage() async {
-    // Implement image picking logic
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    // Handle the picked image
+  Future<void> _pickImagePredict() async {
+    final ImagePicker picker = ImagePicker();
+    // Show dialog to choose between Gallery or Camera
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select the image source'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Camera'),
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+          ),
+          TextButton(
+            child: const Text('Gallery'),
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+          ),
+        ],
+      ),
+    );
+
+    if (source != null) {
+      final XFile? image = await picker.pickImage(source: source);
+      // Handle the picked image
+      if (image != null) {
+        // Prepare for file upload
+        var request = http.MultipartRequest(
+            'POST', Uri.parse('http://127.0.0.1:5000/predictFromImage'));
+        request.files
+            .add(await http.MultipartFile.fromPath('image', image.path));
+
+        // Send the request
+        var response = await request.send();
+
+        // Handle the response from the API
+        if (response.statusCode == 200) {
+          // Get the response body
+          var responseData = await response.stream.toBytes();
+          var responseString = String.fromCharCodes(responseData);
+          predictedImageCaloriesWithFoodItem = jsonDecode(responseString);
+
+          // Use the jsonResponse
+          print(predictedImageCaloriesWithFoodItem);
+          setState(() {});
+        } else {
+          // Handle error
+          print('Failed to upload image and get response');
+        }
+      }
+    }
   }
 
   Future<void> fetchItems(String category) async {
@@ -1023,7 +1070,7 @@ class AddEntryPageState extends State<AddEntryPage> {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: _pickImage,
+                    onPressed: _pickImagePredict,
                     child: const Column(
                       children: [
                         Icon(Icons.camera_alt),
@@ -1067,6 +1114,15 @@ class AddEntryPageState extends State<AddEntryPage> {
                         rows.add(DataRow(cells: cells));
                       }
                     });
+                    if (predictedImageCaloriesWithFoodItem != null) {
+                      predictedImageCaloriesWithFoodItem!.forEach((key, value) {
+                        List<DataCell> cells = [
+                          DataCell(Text(key)), // Name of the food item
+                          DataCell(Text('$value')), // Calories
+                        ];
+                        rows.add(DataRow(cells: cells));
+                      });
+                    }
 
                     return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,

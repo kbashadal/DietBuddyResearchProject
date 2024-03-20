@@ -491,7 +491,8 @@ def predictFromImage():
             return jsonify({'error': 'Failed to get nutritional information'}), nutritional_info_resp.status_code
         nutritional_info_resp_jasn = nutritional_info_resp.json()
         caloires_predicted = {}
-        caloires_predicted[nutritional_info_resp_jasn['foodName'][0]] = nutritional_info_resp_jasn["nutritional_info"]["calories"]
+        caloires_predicted[nutritional_info_resp_jasn['foodName'][0]] = round(nutritional_info_resp_jasn["nutritional_info"]["calories"],2)
+        
         os.remove(file_path)
         return jsonify(caloires_predicted)
     
