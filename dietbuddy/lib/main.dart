@@ -1062,6 +1062,31 @@ class MealOptionsPage extends StatefulWidget {
 }
 
 class MealOptionsPageState extends State<MealOptionsPage> {
+  Future<Map<String, dynamic>> _fetchTotalCaloriesByEmailAndType(
+      String mealType) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.email;
+    final response = await http.get(
+      Uri.parse(
+          'http://localhost:5000/total_calories_by_email_and_type?meal_type=$mealType&email_id=$userEmail'),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return data;
+    } else {
+      if (kDebugMode) {
+        print(
+            'Failed to fetch total calories for $mealType and email $userEmail');
+      }
+      return {
+        'email_id': userEmail,
+        'meal_type': mealType,
+        'total_calories': 0
+      };
+    }
+  }
+
   Future<Map<String, List<MealData>>> _userMealsByEmailAndMealtype(
       String mealTypeFilter) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -1112,44 +1137,63 @@ class MealOptionsPageState extends State<MealOptionsPage> {
   }
 
   Widget _buildMealTypeExpansionTile(String mealType) {
-    return ExpansionTile(
-      leading: const Icon(Icons.restaurant),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(mealType),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => AddEntryPage(rowItemName: mealType)),
-              );
-            },
-            // To ensure the button does not interfere with the expansion action:
-            padding: EdgeInsets.zero, // Minimize padding
-            constraints: BoxConstraints(), // Remove constraints
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchTotalCaloriesByEmailAndType(mealType),
+      builder: (context, snapshot) {
+        String titleText = mealType;
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.hasData) {
+          titleText +=
+              ': ${snapshot.data!['total_calories'].toString()} Calories';
+        }
+
+        return ExpansionTile(
+          leading: const Icon(Icons.restaurant),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                  child: Text(titleText)), // Use Expanded to avoid overflow
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            AddEntryPage(rowItemName: mealType)),
+                  );
+                },
+                // To ensure the button does not interfere with the expansion action:
+                padding: EdgeInsets.zero, // Minimize padding
+                constraints: const BoxConstraints(), // Remove constraints
+              ),
+            ],
           ),
-        ],
-      ),
-      children: <Widget>[
-        FutureBuilder<Map<String, List<MealData>>>(
-          future: _userMealsByEmailAndMealtype(mealType),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                return _buildMealDataList(snapshot.data![mealType]!);
-              } else {
-                return ListTile(
-                  title: Text('No $mealType data available'),
-                );
-              }
-            }
-            return const CircularProgressIndicator();
-          },
-        ),
-      ],
+          children: <Widget>[
+            FutureBuilder<Map<String, List<MealData>>>(
+              future: _userMealsByEmailAndMealtype(mealType),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    return Column(
+                      children: [
+                        _buildMealDataList(snapshot.data![mealType]!),
+                        // The ListTile for total calories is now moved to the title
+                      ],
+                    );
+                  } else {
+                    return ListTile(
+                      title: Text('No $mealType data available'),
+                    );
+                  }
+                }
+                return const CircularProgressIndicator();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1163,4 +1207,4 @@ class MealOptionsPageState extends State<MealOptionsPage> {
           .toList(),
     );
   }
-
+}
