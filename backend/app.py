@@ -112,38 +112,36 @@ def determine_bmi_category(bmi):
 
 @app.route('/register', methods=['POST'])
 def register_user():
-    data = request.json
+    # Access form data (text fields)
+    data = request.form.to_dict()
     height_in_meters = int(data['height']) / 100
-    bmi = float(data['weight'] )/ (height_in_meters ** 2)
-    bmi_category = determine_bmi_category(bmi)  # Determine the BMI category  
-    # insert_food_items()
-    if 'ProfilePic' in data:
-        profile_pic_data = data['ProfilePic']
-        padding_needed = len(profile_pic_data) % 4
-        if padding_needed:  # padding_needed is not 0
-            profile_pic_data += "=" * (4 - padding_needed)
-        
-        profile_pic_bytes = base64.b64decode(profile_pic_data)
-        filename = f"{uuid.uuid4()}.jpeg"  # Assuming the image is a PNG
+    bmi = float(data['weight']) / (height_in_meters ** 2)
+    bmi_category = determine_bmi_category(bmi)  # Determine the BMI category
+
+    # Handle profile picture upload
+    profile_pic_file = request.files.get('profilePic')
+    filename = "None"
+    if profile_pic_file:
+        filename = secure_filename(profile_pic_file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        with open(file_path, 'wb') as file:
-            file.write(profile_pic_bytes)
-        
-        
+        profile_pic_file.save(file_path)
+        # Optionally, process the file (e.g., resize) or store in a different location
+
     try:
-        filename = "None"
+        if profile_pic_file:
+            profile_pic_path = file_path
+        else:
+            profile_pic_path = None
         new_user = User(email_id=data['email'], full_name=data['fullName'],
-                        height=height_in_meters, weight=data['weight'], date_of_birth=data['dateOfBirth'],profile_pic=filename,
-                        bmi=bmi, bmi_category=bmi_category)
+                        height=height_in_meters, weight=data['weight'], date_of_birth=data['dateOfBirth'],
+                        profile_pic=profile_pic_path, bmi=bmi, bmi_category=bmi_category)
         new_user.set_password(data['password'])  # Set the hashed password
         db.session.add(new_user)
         db.session.commit()
-        print("new user added",new_user)
         return jsonify({'message': 'User registered successfully!'}), 201
     except IntegrityError:
         db.session.rollback()
         return jsonify({'message': 'This email is already registered.'}), 409
-
 @app.route('/login', methods=['POST'])
 def login_user():
     data = request.json
@@ -489,6 +487,7 @@ def total_calories_by_email_and_date():
 
     # Serialize the results
     meals_output = {meal_type_name: round(total_calories, 2) for meal_type_name, total_calories in user_meals}
+    print("meals_output",meals_output)
 
     return jsonify({"Breakfast":meals_output["Breakfast"],"Lunch":meals_output["Lunch"],"Dinner":meals_output["Dinner"],"Others":meals_output["Others"]}), 200
 
@@ -601,6 +600,28 @@ def get_alternate_food():
     else:
         return jsonify({'message': 'No alternate food items found close to the target calories'}), 404
     
+@app.route('/user_profile', methods=['GET'])
+def get_user_profile():
+    email_id = request.args.get('email_id')
+    if not email_id:
+        return jsonify({'error': 'Missing email_id parameter'}), 400
+
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_profile = {
+        'email_id': user.email_id,
+        'full_name': user.full_name,
+        'height': user.height,
+        'weight': user.weight,
+        'date_of_birth': user.date_of_birth.strftime('%Y-%m-%d'),
+        'profile_pic': user.profile_pic,
+        'bmi': user.bmi,
+        'bmi_category': user.bmi_category
+    }
+
+    return jsonify(user_profile), 200   
 def insert_unique_categories():
     unique_categories = set()
     # Extract categories from caffeine.csv

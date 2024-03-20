@@ -143,44 +143,50 @@ class RegistrationPageState extends State<RegistrationPage> {
   }
 
   Future<void> registerUser(BuildContext context) async {
-    // Remove the localContext variable
-
     const url = 'http://127.0.0.1:5000/register';
-    final Map<String, dynamic> registrationData = {
-      'fullName': _fullNameController.text,
-      'email': _emailController.text,
-      'password': _passwordController.text,
-      'confirmPassword': _confirmPasswordController.text,
-      'gender': _selectedGender,
-      'height': _heightController.text,
-      'weight': _weightController.text,
-      'dateOfBirth': "${_selectedDate.toLocal()}".split(' ')[0],
-    };
+    final Uri uri = Uri.parse(url);
+
+    // Create a multipart request
+    var request = http.MultipartRequest('POST', uri)
+      ..fields['fullName'] = _fullNameController.text
+      ..fields['email'] = _emailController.text
+      ..fields['password'] = _passwordController.text
+      ..fields['confirmPassword'] = _confirmPasswordController.text
+      ..fields['gender'] = _selectedGender
+      ..fields['height'] = _heightController.text
+      ..fields['weight'] = _weightController.text
+      ..fields['dateOfBirth'] = "${_selectedDate.toLocal()}".split(' ')[0];
+
+    // Image upload logic removed
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(registrationData),
-      );
+      // Send the request
+      var response = await request.send();
 
-      final responseBody = json.decode(response.body);
+      // Listen for response
+      response.stream.transform(utf8.decoder).listen((value) {
+        final responseBody = json.decode(value);
 
-      if (response.statusCode == 201) {
-        if (!mounted) return; // Check if the widget is still in the widget tree
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseBody['message'])),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-      } else {
-        if (!mounted) return; // Check if the widget is still in the widget tree
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseBody['message'])),
-        );
-      }
+        if (response.statusCode == 201) {
+          if (!mounted) {
+            return; // Check if the widget is still in the widget tree
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseBody['message'])),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        } else {
+          if (!mounted) {
+            return; // Check if the widget is still in the widget tree
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseBody['message'])),
+          );
+        }
+      });
     } catch (e) {
       if (kDebugMode) {
         print('Error occurred while sending registration data: $e');
@@ -303,12 +309,6 @@ class RegistrationPageState extends State<RegistrationPage> {
               onTap: () => _selectDate(context),
             ),
             const SizedBox(height: 20),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _pickImageProfile, // Update this line
-              child: const Text('Upload Profile Pic'),
-            ),
-            if (_image != null) Image.file(_image!),
             ElevatedButton(
               onPressed: () {
                 // Handle registration logic
@@ -316,8 +316,7 @@ class RegistrationPageState extends State<RegistrationPage> {
               },
               child: const Text('Next'),
             ),
-            // Add additional fields for profile picture, gender, height, weight, and date of birth
-            // ...
+            // Upload Profile Pic option and image display removed
           ],
         ),
       ),
@@ -566,6 +565,20 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                               MaterialPageRoute(
                                   builder: (context) =>
                                       const ViewHistoryPage()),
+                            ); // Close the menu
+                            // Navigate to View History Page
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.person),
+                          title: const Text('View Profile'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const UserProfilePage()),
                             ); // Close the menu
                             // Navigate to View History Page
                           },
@@ -1436,4 +1449,82 @@ class MealCaloriesData {
   final double calories;
 
   MealCaloriesData(this.mealType, this.calories);
+}
+
+class UserProfilePage extends StatefulWidget {
+  const UserProfilePage({Key? key}) : super(key: key);
+
+  @override
+  UserProfilePageState createState() => UserProfilePageState();
+}
+
+class UserProfilePageState extends State<UserProfilePage> {
+  late Future<Map<String, dynamic>> _profileData;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileData = _fetchUserProfile();
+  }
+
+  Future<Map<String, dynamic>> _fetchUserProfile() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.email;
+    final response = await http.get(
+      Uri.parse('http://localhost:5000/user_profile?email_id=$userEmail'),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load user profile');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('User Profile'),
+      ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _profileData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      // Profile picture section removed
+                      Text('Full Name: ${snapshot.data!['full_name']}',
+                          style: Theme.of(context).textTheme.titleLarge),
+                      Text('Email: ${snapshot.data!['email_id']}',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      Text('Date of Birth: ${snapshot.data!['date_of_birth']}',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      Text('Height: ${snapshot.data!['height']} m',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      Text('Weight: ${snapshot.data!['weight']} kg',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      Text('BMI: ${snapshot.data!['bmi'].toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      Text('BMI Category: ${snapshot.data!['bmi_category']}',
+                          style: Theme.of(context).textTheme.titleMedium),
+                    ],
+                  ),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
+          }
+          // By default, show a loading spinner.
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
+    );
+  }
 }
