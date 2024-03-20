@@ -5,9 +5,26 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => UserProvider(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class UserProvider extends ChangeNotifier {
+  String? _email;
+
+  String? get email => _email;
+
+  void setEmail(String email) {
+    _email = email;
+    notifyListeners();
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -344,6 +361,9 @@ class LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         if (!mounted) return; // Check if the widget is still in the widget tree
         // Navigate to MealSummaryPage upon successful login
+        Provider.of<UserProvider>(context, listen: false)
+            .setEmail(_emailController.text);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -419,10 +439,10 @@ class MealSummaryPageState extends State<MealSummaryPage> {
   @override
   void initState() {
     super.initState();
-    _fetchMealData();
+    _fetchMealDataSummary();
   }
 
-  Future<void> _fetchMealData() async {
+  Future<void> _fetchMealDataSummary() async {
     const url = 'http://127.0.0.1:5000/user_meals_summary_by_email';
     try {
       final response = await http.get(
@@ -553,10 +573,13 @@ class MealSummaryPageState extends State<MealSummaryPage> {
 }
 
 class MealData {
-  final String mealType;
+  final String name;
   final double calories;
+  final double caffeine;
+  final double volume;
+  final String mealType;
 
-  MealData(this.mealType, this.calories);
+  MealData(this.name, this.calories, this.caffeine, this.volume, this.mealType);
 }
 
 class AddEntryPage extends StatefulWidget {
@@ -581,12 +604,39 @@ class AddEntryPageState extends State<AddEntryPage> {
   String?
       per100gramsInput; // Variable to store the per 100 grams input by the user
   int quantity = 1; // Initialize quantity with a default value of 1
-
+  late Future<Map<String, List<MealData>>> _sendDataToAPIFuture;
   @override
   void initState() {
     super.initState();
     fetchCategories();
     mealType = widget.rowItemName;
+    _sendDataToAPIFuture = _userMealsByEmail();
+  }
+
+  Future<Map<String, List<MealData>>> _userMealsByEmail() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.email;
+    final response = await http.get(
+      Uri.parse(
+          'http://localhost:5000/user_meals_by_email?email_id=$userEmail'),
+    );
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> mealsData = jsonDecode(response.body);
+      final Map<String, List<MealData>> userMeals = {};
+      mealsData.forEach((mealType, mealList) {
+        List<MealData> meals = [];
+        for (var meal in mealList) {
+          meals.add(MealData(meal[0], meal[1], meal[2], meal[3], meal[4]));
+        }
+        userMeals[mealType] = meals;
+      });
+      return userMeals;
+    } else {
+      if (kDebugMode) {
+        print('Failed to fetch user meals for email $userEmail');
+      }
+      return {};
+    }
   }
 
   Future<void> _pickImage() async {
@@ -844,13 +894,9 @@ class AddEntryPageState extends State<AddEntryPage> {
                     if (response != null) {
                       Navigator.of(context)
                           .pop(); // Use context instead of dialogContext
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddEntryPage(
-                              rowItemName: mealType ?? 'DefaultMealType'),
-                        ),
-                      );
+                      setState(() {
+                        _sendDataToAPIFuture = _userMealsByEmail();
+                      });
                     } else {
                       // Optionally, handle the case where response is null, e.g., show an error message
                     }
@@ -907,6 +953,55 @@ class AddEntryPageState extends State<AddEntryPage> {
             // ... Implement Trainer Tips section based on the design
             // Awards Section
             // ... Implement Awards section based on the design
+
+            // Show the table
+            FutureBuilder<Map<String, List<MealData>>>(
+              future:
+                  _sendDataToAPIFuture, // Ensure this future returns Map<String, List<MealData>>
+              builder: (BuildContext context,
+                  AsyncSnapshot<Map<String, List<MealData>>> snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasData) {
+                    // Define the columns for the DataTable
+                    List<DataColumn> columns = const [
+                      DataColumn(label: Text('Name')),
+                      DataColumn(label: Text('Calories')),
+                      DataColumn(label: Text('Caffeine (mg)')),
+                      DataColumn(label: Text('Volume (ml)')),
+                      DataColumn(label: Text('Meal Type')),
+                    ];
+
+                    // Create rows for the DataTable
+                    List<DataRow> rows = [];
+
+                    snapshot.data!.forEach((mealType, meals) {
+                      for (MealData meal in meals) {
+                        List<DataCell> cells = [
+                          DataCell(Text(meal.name)),
+                          DataCell(Text('${meal.calories}')),
+                          DataCell(Text('${meal.caffeine}')),
+                          DataCell(Text('${meal.volume}')),
+                          DataCell(Text(meal.mealType)),
+                        ];
+                        rows.add(DataRow(cells: cells));
+                      }
+                    });
+
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columns: columns,
+                        rows: rows,
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  }
+                }
+                // By default, show a loading spinner
+                return const CircularProgressIndicator();
+              },
+            ),
           ],
         ),
       ),
