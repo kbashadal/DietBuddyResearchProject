@@ -443,6 +443,10 @@ class MealSummaryPageState extends State<MealSummaryPage> {
     _fetchMealDataSummary();
   }
 
+  double getTotalCalories() {
+    return _mealData.values.fold(0, (sum, element) => sum + element);
+  }
+
   Future<void> _fetchMealDataSummary() async {
     const url = 'http://127.0.0.1:5000/user_meals_summary_by_email';
     try {
@@ -475,67 +479,99 @@ class MealSummaryPageState extends State<MealSummaryPage> {
       appBar: AppBar(
         title: const Text('Meal Summary'),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const MealOptionsPage()), // Assuming AddNewEntryPage exists
-                  );
-                },
-                child: const Text(
-                  'Add New Entry',
-                  style: TextStyle(
-                      decoration: TextDecoration.underline,
-                      color: Colors.blue,
-                      fontSize: 16),
+          Column(
+            children: [
+              Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Today: ${DateTime.now().toLocal().toString().split(' ')[0]}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Today: ${DateTime.now().toLocal().toString().split(' ')[0]}',
-                style: const TextStyle(fontSize: 16),
+              Align(
+                alignment: Alignment.center,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Total Calories: ${getTotalCalories().toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
               ),
-            ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: _mealData.isNotEmpty
+                    ? SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.2,
+                        child: charts.BarChart(
+                          _createChartData(),
+                          animate: true,
+                          behaviors: [
+                            charts.SeriesLegend(
+                              position: charts.BehaviorPosition.top,
+                              horizontalFirst: false,
+                              cellPadding: const EdgeInsets.only(
+                                  right: 2.0, bottom: 2.0),
+                              showMeasures: true,
+                              legendDefaultMeasure:
+                                  charts.LegendDefaultMeasure.lastValue,
+                              entryTextStyle: charts.TextStyleSpec(
+                                  color:
+                                      charts.MaterialPalette.gray.shadeDefault,
+                                  fontFamily: 'Georgia',
+                                  fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      )
+                    : const CircularProgressIndicator(),
+              ),
+            ],
           ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: _mealData.isNotEmpty
-                ? SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.2,
-                    child: charts.BarChart(
-                      _createChartData(),
-                      animate: true,
-                      behaviors: [
-                        charts.SeriesLegend(
-                          position: charts.BehaviorPosition.top,
-                          horizontalFirst: false,
-                          cellPadding:
-                              const EdgeInsets.only(right: 2.0, bottom: 2.0),
-                          showMeasures: true,
-                          legendDefaultMeasure:
-                              charts.LegendDefaultMeasure.lastValue,
-                          entryTextStyle: charts.TextStyleSpec(
-                              color: charts.MaterialPalette.gray.shadeDefault,
-                              fontFamily: 'Georgia',
-                              fontSize: 11),
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Wrap(
+                      children: <Widget>[
+                        ListTile(
+                          leading: const Icon(Icons.add),
+                          title: const Text('Add Meal'),
+                          onTap: () {
+                            Navigator.pop(context); // Close the menu
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const MealOptionsPage()),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.history),
+                          title: const Text('View History'),
+                          onTap: () {
+                            Navigator.pop(context); // Close the menu
+                            // Navigate to View History Page
+                          },
                         ),
                       ],
-                    ),
-                  )
-                : const CircularProgressIndicator(),
+                    );
+                  },
+                );
+              },
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
           ),
         ],
       ),
