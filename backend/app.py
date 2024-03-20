@@ -203,6 +203,7 @@ def add_user_meals():
     # Insert all new meals into the database in a bulk operation
     
     try:
+        print("new_meals",new_meals)
         db.session.add_all(new_meals)
         db.session.commit()
         return jsonify({'message': f'{len(new_meals)} meals added successfully.'}), 201
@@ -237,7 +238,7 @@ def user_meals_by_email():
     # Serialize the results
     output = {}
     for meal_type, meals in meals_by_type.items():
-        output[meal_type] = [[meal.food_item.FoodItemName, meal.calories, meal.volume, meal.weight, meal_type] for meal in meals]
+        output[meal_type] = [[meal.food_item.FoodItemName, round(meal.calories,2), meal.volume, meal.weight, meal_type] for meal in meals]
 
     return jsonify(output), 200
 @app.route('/user_meals_summary_by_email', methods=['GET'])
@@ -298,7 +299,7 @@ def predictdrink():
     })
     prediction = model.predict(input_df)
     print("prediction",prediction)
-    return jsonify({'calories': prediction[0]})
+    return jsonify({'calories': round(prediction[0],2)})
 
 @app.route('/predictNonDrink', methods=['POST'])
 def predictNonDrink():
@@ -311,7 +312,7 @@ def predictNonDrink():
         'per100grams': [data['per100grams']]    })
     predictions = model.predict(input_df)
     print("predictions",predictions)
-    return jsonify({'calories': predictions[0]})
+    return jsonify({'calories': round(predictions[0],2)})
 
 @app.route('/suggestExecise', methods=['POST'])
 def predict_exercises():

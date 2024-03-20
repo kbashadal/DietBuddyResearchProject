@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(
@@ -668,6 +669,8 @@ class AddEntryPageState extends State<AddEntryPage> {
   }
 
   Future<Map<String, dynamic>?> sendDataToAPI() async {
+    final userEmail = Provider.of<UserProvider>(context, listen: false).email;
+
     // Define the list of categories that require volume and caffeine input
     const List<String> volumeAndCaffeineCategories = [
       "Coffee",
@@ -699,14 +702,12 @@ class AddEntryPageState extends State<AddEntryPage> {
       dataToSend = {
         'FoodItem': selectedItem,
         'selectedCategory': selectedCategory,
-        'per100grams':
-            per100gramsInput, // Assuming you have a variable for weight input
+        'per100grams': per100gramsInput,
       };
-      endpoint =
-          'http://127.0.0.1:5000/predictNonDrink'; // Assuming a different endpoint for non-volume/caffeine categories
+      endpoint = 'http://127.0.0.1:5000/predictNonDrink';
     }
 
-    // Call the Flask API
+    // Call the Flask API for prediction
     final url = Uri.parse(endpoint);
     final response = await http.post(
       url,
@@ -716,15 +717,58 @@ class AddEntryPageState extends State<AddEntryPage> {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
-      return responseData; // Return the decoded response data
+      final Map<String, dynamic> userMealData;
+
+      // After getting the prediction, add the user meal to the database
+      final addMealUrl = Uri.parse('http://127.0.0.1:5000/add_user_meals');
+      if (isVolumeAndCaffeineCategory) {
+        userMealData = {
+          'user_email': userEmail,
+          'food_item_name': selectedItem,
+          'meal_type_name': mealType,
+          'Caffeine': caffeineInput,
+          'Volume (ml)': volumeInput,
+          "date": DateTime.now().toString(),
+          "time": DateFormat('HH:mm:ss').format(DateTime.now())
+        };
+      } else {
+        userMealData = {
+          'user_email': userEmail,
+          'food_item_name': selectedItem,
+          'meal_type_name': mealType,
+          'weight(gms)': per100gramsInput,
+          "date": DateTime.now().toString(),
+          "time": DateFormat('HH:mm:ss').format(DateTime.now())
+        };
+      }
+      List<Map<String, dynamic>> mealsList = [];
+      mealsList.add(userMealData);
+
+      final addMealResponse = await http.post(
+        addMealUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(mealsList),
+      );
+
+      if (addMealResponse.statusCode == 201) {
+        // Handle successful addition of user meal
+        final Map<String, dynamic> addMealResponseData =
+            json.decode(addMealResponse.body);
+        return responseData; // Return the decoded response data from adding the meal
+      } else {
+        // Handle error or invalid response from adding the meal
+        if (kDebugMode) {
+          print('Error adding meal: ${addMealResponse.body}');
+        }
+        return null;
+      }
     } else {
-      // Handle error or invalid response
+      // Handle error or invalid response from prediction
       if (kDebugMode) {
         print('Error: ${response.body}');
       }
       return null;
     }
-    // Handle the response...
   }
 
   Future<void> fetchCategories() async {
