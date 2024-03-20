@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
@@ -59,7 +60,6 @@ class FoodCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
 
-    
 class FoodItems(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     FoodItemName = db.Column(db.String(255), nullable=False)
@@ -492,10 +492,45 @@ def predictFromImage():
         nutritional_info_resp_jasn = nutritional_info_resp.json()
         caloires_predicted = {}
         caloires_predicted[nutritional_info_resp_jasn['foodName'][0]] = round(nutritional_info_resp_jasn["nutritional_info"]["calories"],2)
-        
+        save_to_db(caloires_predicted)
         os.remove(file_path)
         return jsonify(caloires_predicted)
     
+def save_to_db(caloires_predicted):
+    category = "ImageUpload"
+    meal_type = "Breakfast"
+    email = "sujahidms@gmail.com"
+    date = datetime.datetime.now().strftime('%Y-%m-%d')
+    time = datetime.datetime.now().strftime('%H:%M:%S')
+    weight = "0"
+    volume = 0
+    calories = str(caloires_predicted)
+    caffeine = 0
+    cals_per_100grams = "0"
+    kj_per_100grams = "0"
+    user = User.query.filter_by(email_id=email).first()
+    meal_type_id = MealType.query.filter_by(name=meal_type).first().id
+    existing_category = FoodCategory.query.filter_by(name=category).first()
+    for food_item, calories in caloires_predicted.items():
+        food_item = food_item[0].upper() + food_item[1:]
+        existing_entry = FoodItems.query.filter_by(FoodItemName=food_item).first()
+        if not existing_entry:
+            existing_entry = FoodItems(
+                    FoodItemName=food_item,
+                    volume_ml=float(volume),
+                    Calories=calories,
+                    caffeine_mg=float(caffeine),
+                    Cals_per100grams=cals_per_100grams,  # Default value, adjust if needed
+                    KJ_per100grams=kj_per_100grams,  # Default value, adjust if needed
+                    category_id=existing_category.id
+                )
+            db.session.add(existing_entry)
+            print("exisint added")
+        new_meal = UserMeals(user_id=user.id, item_id=existing_entry.id, meal_type_id=meal_type_id, date=date, time=time,
+                             weight = float(weight),volume = float(volume),calories=float(calories),caffeine=float(caffeine))
+        db.session.add(new_meal)
+        print("new meal added")
+    db.session.commit()
 @app.route('/alternate_food', methods=['GET'])
 def get_alternate_food():
     try:
