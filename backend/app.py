@@ -456,7 +456,41 @@ def predictExerciseWithTime():
     
     return jsonify({'top_3_exercises_with_time': exercise_time_estimates})
 
+@app.route('/total_calories_by_email_and_date', methods=['GET'])
+def total_calories_by_email_and_date():
+    email_id = request.args.get('email_id')
+    date_param = request.args.get('date')
 
+    if not email_id:
+        return jsonify({'error': 'Missing email_id parameter'}), 400
+    if not date_param:
+        return jsonify({'error': 'Missing date parameter'}), 400
+
+    try:
+        date_obj = datetime.datetime.strptime(date_param, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD.'}), 400
+
+    # Find user by email_id
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Query to fetch user meals for the specified date and calculate total calories per meal type
+    user_meals = db.session.query(
+        MealType.name.label('meal_type_name'),
+        db.func.sum(UserMeals.calories).label('total_calories')
+    ).join(MealType, UserMeals.meal_type_id == MealType.id
+    ).filter(UserMeals.user_id == user.id, UserMeals.date == date_obj
+    ).group_by(MealType.name).all()
+
+    if not user_meals:
+        return jsonify({'message': f'No meals found for the given user email on {date_param}.'}), 404
+
+    # Serialize the results
+    meals_output = {meal_type_name: round(total_calories, 2) for meal_type_name, total_calories in user_meals}
+
+    return jsonify({"Breakfast":meals_output["Breakfast"],"Lunch":meals_output["Lunch"],"Dinner":meals_output["Dinner"],"Others":meals_output["Others"]}), 200
 
 @app.route('/predictFromImage', methods=['POST'])
 def predictFromImage():
