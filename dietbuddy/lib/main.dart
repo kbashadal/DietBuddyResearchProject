@@ -543,7 +543,7 @@ class MealSummaryPageState extends State<MealSummaryPage> {
 
   List<charts.Series<MealData, String>> _createChartData() {
     final List<MealData> dataList = _mealData.entries
-        .map((entry) => MealData(entry.key, entry.value))
+        .map((entry) => MealData(entry.key, entry.value, 0, 0, ''))
         .toList();
 
     List<charts.Series<MealData, String>> seriesList = [];
@@ -610,10 +610,11 @@ class AddEntryPageState extends State<AddEntryPage> {
     super.initState();
     fetchCategories();
     mealType = widget.rowItemName;
-    _sendDataToAPIFuture = _userMealsByEmail();
+    _sendDataToAPIFuture = _userMealsByEmail(widget.rowItemName);
   }
 
-  Future<Map<String, List<MealData>>> _userMealsByEmail() async {
+  Future<Map<String, List<MealData>>> _userMealsByEmail(
+      String mealTypeFilter) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.email;
     final response = await http.get(
@@ -626,9 +627,14 @@ class AddEntryPageState extends State<AddEntryPage> {
       mealsData.forEach((mealType, mealList) {
         List<MealData> meals = [];
         for (var meal in mealList) {
-          meals.add(MealData(meal[0], meal[1], meal[2], meal[3], meal[4]));
+          // Filter the meals based on the mealTypeFilter
+          if (mealType == mealTypeFilter) {
+            meals.add(MealData(meal[0], meal[1], meal[2], meal[3], meal[4]));
+          }
         }
-        userMeals[mealType] = meals;
+        if (meals.isNotEmpty) {
+          userMeals[mealType] = meals;
+        }
       });
       return userMeals;
     } else {
@@ -895,7 +901,7 @@ class AddEntryPageState extends State<AddEntryPage> {
                       Navigator.of(context)
                           .pop(); // Use context instead of dialogContext
                       setState(() {
-                        _sendDataToAPIFuture = _userMealsByEmail();
+                        _sendDataToAPIFuture = _userMealsByEmail(mealType!);
                       });
                     } else {
                       // Optionally, handle the case where response is null, e.g., show an error message
@@ -966,9 +972,6 @@ class AddEntryPageState extends State<AddEntryPage> {
                     List<DataColumn> columns = const [
                       DataColumn(label: Text('Name')),
                       DataColumn(label: Text('Calories')),
-                      DataColumn(label: Text('Caffeine (mg)')),
-                      DataColumn(label: Text('Volume (ml)')),
-                      DataColumn(label: Text('Meal Type')),
                     ];
 
                     // Create rows for the DataTable
@@ -979,9 +982,6 @@ class AddEntryPageState extends State<AddEntryPage> {
                         List<DataCell> cells = [
                           DataCell(Text(meal.name)),
                           DataCell(Text('${meal.calories}')),
-                          DataCell(Text('${meal.caffeine}')),
-                          DataCell(Text('${meal.volume}')),
-                          DataCell(Text(meal.mealType)),
                         ];
                         rows.add(DataRow(cells: cells));
                       }
