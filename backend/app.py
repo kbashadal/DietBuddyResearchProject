@@ -212,6 +212,8 @@ def add_user_meals():
         return jsonify({'message': 'Failed to add meals.', 'error': str(e)}), 500
 @app.route('/user_meals_by_email', methods=['GET'])
 def user_meals_by_email():
+    from datetime import date
+
     email_id = request.args.get('email_id')
     if not email_id:
         return jsonify({'error': 'Missing email_id parameter'}), 400
@@ -221,14 +223,15 @@ def user_meals_by_email():
     if not user:
         return jsonify({'message': 'User not found.'}), 404
 
-    # Query to fetch user meals and join with MealType to categorize them
+    # Query to fetch user meals for today and join with MealType to categorize them
+    today_date = date.today()
     user_meals = db.session.query(
         UserMeals, MealType.name.label('meal_type_name')
     ).join(MealType, UserMeals.meal_type_id == MealType.id
-    ).filter(UserMeals.user_id == user.id).all()
+    ).filter(UserMeals.user_id == user.id, UserMeals.date == today_date).all()
 
     if not user_meals:
-        return jsonify({'message': 'No meals found for the given user email.'}), 404
+        return jsonify({'message': 'No meals found for the given user email for today.'}), 404
 
     # Group meals by meal type
     meals_by_type = defaultdict(list)
@@ -241,6 +244,46 @@ def user_meals_by_email():
         output[meal_type] = [[meal.food_item.FoodItemName, round(meal.calories,2), meal.volume, meal.weight, meal_type] for meal in meals]
 
     return jsonify(output), 200
+
+@app.route('/user_meals_by_email_and_type', methods=['GET'])
+def user_meals_by_email_and_type():
+    from datetime import date
+
+    email_id = request.args.get('email_id')
+    meal_type_name_param = request.args.get('meal_type')
+
+    if not email_id:
+        return jsonify({'error': 'Missing email_id parameter'}), 400
+    if not meal_type_name_param:
+        return jsonify({'error': 'Missing meal_type parameter'}), 400
+
+    # Find user by email_id
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Query to fetch user meals for today and join with MealType to categorize them
+    today_date = date.today()
+    user_meals = db.session.query(
+        UserMeals, MealType.name.label('meal_type_name')
+    ).join(MealType, UserMeals.meal_type_id == MealType.id
+    ).filter(UserMeals.user_id == user.id, UserMeals.date == today_date, MealType.name == meal_type_name_param).all()
+
+    if not user_meals:
+        return jsonify({'message': f'No {meal_type_name_param} meals found for the given user email for today.'}), 404
+
+    # Group meals by meal type
+    meals_by_type = defaultdict(list)
+    for meal, meal_type_name in user_meals:
+        meals_by_type[meal_type_name].append(meal)
+
+    # Serialize the results
+    output = {}
+    for meal_type, meals in meals_by_type.items():
+        output[meal_type] = [[meal.food_item.FoodItemName, round(meal.calories,2), meal.volume, meal.weight, meal_type] for meal in meals]
+
+    return jsonify(output), 200
+
 @app.route('/user_meals_summary_by_email', methods=['GET'])
 def user_meals_summary_by_email():
     email_id = request.args.get('email_id')
