@@ -74,8 +74,28 @@ class FoodItems(db.Model):
     # Relationship (optional for easier access)
     category = db.relationship('FoodCategory', backref=db.backref('food_items', lazy=True)) 
     
+class Exercise(db.Model):
+    __tablename__ = 'exercise'
+    id = db.Column(db.Integer, primary_key=True)
+    workout_type = db.Column(db.String(255), nullable=False)
 
+    def __repr__(self):
+        return f'<Exercise {self.workout_type}>'
 
+class UserExerciseSuggestions(db.Model):
+    __tablename__ = 'user_exercise_suggestions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('exercise.id'), nullable=False)
+    suggested_on = db.Column(db.Date, default=datetime.date.today)
+    suggested_time = db.Column(db.Float, nullable=True)  # Suggested time in minutes
+
+    # Relationships
+    user = db.relationship('User', backref=db.backref('exercise_suggestions', lazy=True))
+    exercise = db.relationship('Exercise', backref=db.backref('suggested_to_users', lazy=True))
+
+    def __repr__(self):
+        return f'<UserExerciseSuggestions {self.user_id} {self.exercise_id}>'
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email_id = db.Column(db.String(120), unique=True, nullable=False)
@@ -110,8 +130,119 @@ def determine_bmi_category(bmi):
     else:
         return 'Obese'
 
+@app.route('/save_user_exercise_suggestion', methods=['POST'])
+def save_user_exercise_suggestion():
+    data = request.json
+    email_id = data.get('emailId')
+    exercise_name = data.get('exerciseName')
+    suggested_time = data.get('suggestedTime', None)  # Optional, defaults to None if not provided
+
+    # Find user and exercise by their identifiers
+    user = User.query.filter_by(email_id=email_id).first()
+    exercise = Exercise.query.filter_by(workout_type=exercise_name).first()
+
+    if not user or not exercise:
+        return jsonify({'error': 'User or Exercise not found.'}), 404
+
+    # Create a new UserExerciseSuggestions instance
+    new_suggestion = UserExerciseSuggestions(
+        user_id=user.id,
+        exercise_id=exercise.id,
+        # suggested_time=suggested_time
+    )
+    print("new_suggestion",new_suggestion)
+
+    # Add to the session and commit
+    try:
+        db.session.add(new_suggestion)
+        db.session.commit()
+        return jsonify({'message': 'Exercise suggestion saved successfully.'}), 201
+    except Exception as e:
+        print("error",e)
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_user_exercise_suggestions', methods=['GET'])
+def get_user_exercise_suggestions():
+    email_id = request.args.get('emailId')
+    if not email_id:
+        return jsonify({'error': 'Missing email_id parameter'}), 400
+
+    # Find user by email_id
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Fetch UserExerciseSuggestions for the user, including related Exercise details
+    suggestions = UserExerciseSuggestions.query.filter_by(user_id=user.id).join(Exercise, UserExerciseSuggestions.exercise_id == Exercise.id).all()
+
+    if not suggestions:
+        return jsonify({'message': 'No exercise suggestions found for the given user.'}), 404
+
+    # Serialize the suggestions along with the Exercise details, removing duplicates
+    suggestions_dict = {}
+    for suggestion in suggestions:
+        exercise_type = suggestion.exercise.workout_type
+        if exercise_type not in suggestions_dict:
+            suggestions_dict[exercise_type] = {
+                'suggested_on': suggestion.suggested_on.strftime('%Y-%m-%d'),
+                'suggested_time': suggestion.suggested_time,
+                'exercise': {
+                    'id': suggestion.exercise.id,
+                    'workout_type': exercise_type
+                }
+            }
+
+    suggestions_list = list(suggestions_dict.values())
+    print("suggestions_list", suggestions_list)
+    return jsonify(suggestions_list), 200
+
+@app.route('/get_user_exercise_suggestions_by_date', methods=['GET'])
+def get_user_exercise_suggestions_by_date():
+    email_id = request.args.get('emailId')
+    date_param = request.args.get('date')  # New date parameter
+
+    if not email_id:
+        return jsonify({'error': 'Missing email_id parameter'}), 400
+    if not date_param:
+        return jsonify({'error': 'Missing date parameter'}), 400
+
+    try:
+        date_obj = datetime.datetime.strptime(date_param, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD.'}), 400
+
+    # Find user by email_id
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Fetch UserExerciseSuggestions for the user, including related Exercise details, filtered by date
+    suggestions = UserExerciseSuggestions.query.filter_by(user_id=user.id, suggested_on=date_obj).join(Exercise, UserExerciseSuggestions.exercise_id == Exercise.id).all()
+
+    if not suggestions:
+        return jsonify({'message': 'No exercise suggestions found for the given user on the specified date.'}), 404
+
+    # Serialize the suggestions along with the Exercise details, removing duplicates
+    suggestions_dict = {}
+    for suggestion in suggestions:
+        exercise_type = suggestion.exercise.workout_type
+        if exercise_type not in suggestions_dict:
+            suggestions_dict[exercise_type] = {
+                'suggested_on': suggestion.suggested_on.strftime('%Y-%m-%d'),
+                'suggested_time': suggestion.suggested_time,
+                'exercise': {
+                    'id': suggestion.exercise.id,
+                    'workout_type': exercise_type
+                }
+            }
+
+    suggestions_list = list(suggestions_dict.values())
+    return jsonify(suggestions_list), 200
+
 @app.route('/register', methods=['POST'])
 def register_user():
+    # insert_food_items()
     # Access form data (text fields)
     data = request.form.to_dict()
     height_in_meters = int(data['height']) / 100
@@ -142,6 +273,7 @@ def register_user():
     except IntegrityError:
         db.session.rollback()
         return jsonify({'message': 'This email is already registered.'}), 409
+
 @app.route('/login', methods=['POST'])
 def login_user():
     data = request.json
@@ -150,6 +282,7 @@ def login_user():
         return jsonify({'message': 'Login successful!'}), 200
     else:
         return jsonify({'message': 'Invalid email or password'}), 401
+
 @app.route('/add_user_meals', methods=['POST'])
 def add_user_meals():
     data = request.json  # Get the JSON data sent to the endpoint
@@ -208,6 +341,7 @@ def add_user_meals():
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': 'Failed to add meals.', 'error': str(e)}), 500
+
 @app.route('/user_meals_by_email', methods=['GET'])
 def user_meals_by_email():
     from datetime import date
@@ -346,6 +480,7 @@ def user_meals_summary_by_email():
         summary[meal_type_name] += round(user_meal.calories,2) if user_meal.calories else 0
     print("summary",summary)
     return jsonify({'email_id': email_id, 'calories_summary_by_meal_type': summary}), 200    
+
 @app.route('/food_items_by_category/<category_name>', methods=['GET'])
 def get_food_items_by_category(category_name):
     print("category_name", category_name)
@@ -356,11 +491,13 @@ def get_food_items_by_category(category_name):
         return jsonify(all_food_items), 200
     else:
         return jsonify({'message': 'No food items found for the given category.'}), 404
+
 @app.route('/food_categories', methods=['GET'])
 def get_food_categories():
     categories = FoodCategory.query.all()
     categories_list = [{'id': category.id, 'name': category.name} for category in categories]
     return jsonify(categories_list)    
+
 @app.route('/predictdrink', methods=['POST'])
 def predictdrink():
     model = joblib.load('caffeine_calories_predictor_rf.pkl')
@@ -413,8 +550,6 @@ def predict_exercises():
     print("top_3_workouts",top_3_workouts)
     
     return jsonify({'top_3_suggestions': top_3_workouts})
-
-# Load the classification model
 
 
 # Function to load regressor models for the top exercises
@@ -738,6 +873,16 @@ def insert_food_items():
                         category_id=category.id
                     )
                     db.session.add(new_food_item)
+                    
+                unique_workouts = set()
+        with open('archive-4/Activity_Dataset_V1.csv', mode='r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                workout_type = row['workout_type']
+                if workout_type not in unique_workouts:
+                    unique_workouts.add(workout_type)
+                    new_exercise = Exercise(workout_type=workout_type)
+                    db.session.add(new_exercise)        
     db.session.commit()
     
     

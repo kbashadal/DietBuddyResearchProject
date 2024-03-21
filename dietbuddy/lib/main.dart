@@ -583,6 +583,20 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                             // Navigate to View History Page
                           },
                         ),
+                        ListTile(
+                          leading: const Icon(Icons.settings_suggest_rounded),
+                          title: const Text('View Interventions'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const InterventionsSummaryPage()),
+                            ); // Close the menu
+                            // Navigate to View History Page
+                          },
+                        ),
                       ],
                     );
                   },
@@ -895,6 +909,8 @@ class AddEntryPageState extends State<AddEntryPage> {
   }
 
   Future<void> showExerciseSuggestionsWithTime(int dailyCalorieLimit) async {
+    final userEmailNonNull =
+        Provider.of<UserProvider>(context, listen: false).email!;
     final response = await http.post(
       Uri.parse('http://127.0.0.1:5000/suggestExerciseWithTime'),
       headers: {'Content-Type': 'application/json'},
@@ -916,14 +932,28 @@ class AddEntryPageState extends State<AddEntryPage> {
               child: ListBody(
                 children: suggestionsWithTime.map((suggestion) {
                   return Text(
-                      "${suggestion['exercise']}:for ${suggestion['time'].toStringAsFixed(2)} minutes");
+                      "${suggestion['exercise']}: for ${suggestion['time'].toStringAsFixed(2)} minutes");
                 }).toList(),
               ),
             ),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close the suggestions dialog
+                  Navigator.of(context).pop();
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => InterventionPageWithTime(
+                            exerciseSuggestionsWithTime: suggestionsWithTime)),
+                  ); // Close the suggestions dialog
+                  // Here, save each exercise suggestion for the non-null userEmail
+                  // ignore: avoid_function_literals_in_foreach_calls
+                  suggestionsWithTime.forEach((suggestion) async {
+                    await saveExerciseSuggestion(userEmailNonNull,
+                        suggestion['exercise'], suggestion['time']);
+                  });
+                  // Optionally, navigate to InterventionPage with the suggestions data
                 },
                 child: const Text("Close"),
               ),
@@ -938,7 +968,28 @@ class AddEntryPageState extends State<AddEntryPage> {
     }
   }
 
+  Future<void> saveExerciseSuggestion(String emailId, String exerciseName,
+      [double? suggestedTime]) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/save_user_exercise_suggestion'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'emailId': emailId,
+        'exerciseName': exerciseName,
+        'suggestedTime': suggestedTime, // This is optional, can be null
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      if (kDebugMode) {
+        print('Failed to save exercise suggestion for $exerciseName');
+      }
+    }
+  }
+
   Future<void> showExerciseSuggestions(int dailyCalorieLimit) async {
+    final userEmail = Provider.of<UserProvider>(context, listen: false).email;
+
     final response = await http.post(
       Uri.parse('http://127.0.0.1:5000/suggestExercise'),
       headers: {'Content-Type': 'application/json'},
@@ -949,6 +1000,11 @@ class AddEntryPageState extends State<AddEntryPage> {
       final data = json.decode(response.body);
       final List<String> suggestions =
           List<String>.from(data['top_3_suggestions']);
+      final userEmailNonNull = userEmail!; // Ensure userEmail is not null
+
+      for (String exerciseName in suggestions) {
+        await saveExerciseSuggestion(userEmailNonNull, exerciseName);
+      }
 
       if (!mounted) return;
       showDialog(
@@ -966,6 +1022,13 @@ class AddEntryPageState extends State<AddEntryPage> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Close the suggestions dialog
+                  // Navigate to InterventionPage with the suggestions data
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            InterventionPage(exerciseSuggestions: suggestions)),
+                  );
                 },
                 child: const Text("Close"),
               ),
@@ -1694,6 +1757,198 @@ class UserProfilePageState extends State<UserProfilePage> {
           // By default, show a loading spinner.
           return const Center(child: CircularProgressIndicator());
         },
+      ),
+    );
+  }
+}
+
+class InterventionPageWithTime extends StatefulWidget {
+  final List<dynamic> exerciseSuggestionsWithTime;
+
+  const InterventionPageWithTime(
+      {Key? key, required this.exerciseSuggestionsWithTime})
+      : super(key: key);
+
+  @override
+  InterventionPageWithTimeState createState() =>
+      InterventionPageWithTimeState();
+}
+
+class InterventionPageWithTimeState extends State<InterventionPageWithTime> {
+  @override
+  Widget build(BuildContext context) {
+    // Display the exercise suggestions with time under its respective section
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Intervention Suggestions'),
+      ),
+      body: ListView.builder(
+        itemCount: widget.exerciseSuggestionsWithTime.length,
+        itemBuilder: (context, index) {
+          final suggestion = widget.exerciseSuggestionsWithTime[index];
+          return ListTile(
+            title: Text(suggestion['exercise']),
+            subtitle:
+                Text("for ${suggestion['time'].toStringAsFixed(2)} minutes"),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class InterventionPage extends StatefulWidget {
+  final List<String> exerciseSuggestions;
+  final List<dynamic>? exerciseSuggestionsWithTime;
+
+  const InterventionPage(
+      {Key? key,
+      required this.exerciseSuggestions,
+      this.exerciseSuggestionsWithTime})
+      : super(key: key);
+
+  @override
+  InterventionPageState createState() => InterventionPageState();
+}
+
+class InterventionPageState extends State<InterventionPage> {
+  @override
+  Widget build(BuildContext context) {
+    // Display the exercise suggestions
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Intervention Suggestions'),
+      ),
+      body: ListView.builder(
+        itemCount: widget.exerciseSuggestions.length,
+        itemBuilder: (context, index) {
+          final suggestion = widget.exerciseSuggestions[index];
+          return ListTile(
+            title: Text(suggestion),
+            // Optionally, display time if available
+            subtitle: widget.exerciseSuggestionsWithTime != null
+                ? Text(
+                    "for ${widget.exerciseSuggestionsWithTime![index]['time'].toStringAsFixed(2)} minutes")
+                : null,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class InterventionsSummaryPage extends StatefulWidget {
+  const InterventionsSummaryPage({Key? key}) : super(key: key);
+
+  @override
+  InterventionsSummaryPageState createState() =>
+      InterventionsSummaryPageState();
+}
+
+class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
+  late Future<List<dynamic>> _exerciseSuggestions;
+
+  @override
+  void initState() {
+    super.initState();
+    _exerciseSuggestions = fetchExerciseSuggestions(context);
+  }
+
+  Future<List<dynamic>> fetchExerciseSuggestions(BuildContext context) async {
+    // Obtain the user's email from UserProvider
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.email;
+
+    // Ensure userEmail is not null or handle it appropriately
+    if (userEmail == null) {
+      throw Exception('User email is not available');
+    }
+
+    final response = await http.get(
+      Uri.parse(
+          'http://localhost:5000/get_user_exercise_suggestions?emailId=$userEmail'),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load exercise suggestions');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Intervention Summary'),
+      ),
+      body: ListView(
+        children: <Widget>[
+          ExpansionTile(
+            title: const Text('Exercise'),
+            leading: const Icon(Icons.fitness_center),
+            children: <Widget>[
+              FutureBuilder<List<dynamic>>(
+                future: _exerciseSuggestions,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                        shrinkWrap: true, // Add this line
+                        physics:
+                            const NeverScrollableScrollPhysics(), // And this one
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          var suggestion = snapshot.data![index];
+                          return ListTile(
+                            title: Text(suggestion['exercise']['workout_type']),
+                            subtitle: Text(
+                                'Suggested on: ${suggestion['suggested_on']}'),
+                            trailing: suggestion['suggested_time'] != null
+                                ? Text(
+                                    'Time: ${suggestion['suggested_time']} minutes')
+                                : null,
+                          );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return ListTile(
+                        title: Text('Error: ${snapshot.error}'),
+                      );
+                    }
+                  }
+                  return const ListTile(
+                    title: CircularProgressIndicator(),
+                  );
+                },
+              ),
+            ],
+          ),
+          ExpansionTile(
+            title: const Text('Food'),
+            leading: const Icon(Icons.fastfood),
+            children: <Widget>[
+              ListTile(
+                title: const Text('View Food Alternatives'),
+                onTap: () {
+                  // Navigate to Food Alternatives Page
+                },
+              ),
+            ],
+          ),
+          ExpansionTile(
+            title: const Text('Chat'),
+            leading: const Icon(Icons.chat),
+            children: <Widget>[
+              ListTile(
+                title: const Text('Chat with DietBot'),
+                onTap: () {
+                  // Navigate to Chat with DietBot Page
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
