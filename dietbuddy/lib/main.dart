@@ -944,8 +944,7 @@ class AddEntryPageState extends State<AddEntryPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => InterventionPageWithTime(
-                            exerciseSuggestionsWithTime: suggestionsWithTime)),
+                        builder: (context) => const InterventionsSummaryPage()),
                   ); // Close the suggestions dialog
                   // Here, save each exercise suggestion for the non-null userEmail
                   // ignore: avoid_function_literals_in_foreach_calls
@@ -1043,8 +1042,7 @@ class AddEntryPageState extends State<AddEntryPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            InterventionPage(exerciseSuggestions: suggestions)),
+                        builder: (context) => const InterventionsSummaryPage()),
                   );
                 },
                 child: const Text("Close"),
@@ -1096,6 +1094,11 @@ class AddEntryPageState extends State<AddEntryPage> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const InterventionsSummaryPage()),
+                  );
                   // Removed the incorrect Navigator.push to InterventionPage with exerciseSuggestions
                 },
                 child: const Text("Close"),
@@ -1825,81 +1828,6 @@ class UserProfilePageState extends State<UserProfilePage> {
           }
           // By default, show a loading spinner.
           return const Center(child: CircularProgressIndicator());
-        },
-      ),
-    );
-  }
-}
-
-class InterventionPageWithTime extends StatefulWidget {
-  final List<dynamic> exerciseSuggestionsWithTime;
-
-  const InterventionPageWithTime(
-      {Key? key, required this.exerciseSuggestionsWithTime})
-      : super(key: key);
-
-  @override
-  InterventionPageWithTimeState createState() =>
-      InterventionPageWithTimeState();
-}
-
-class InterventionPageWithTimeState extends State<InterventionPageWithTime> {
-  @override
-  Widget build(BuildContext context) {
-    // Display the exercise suggestions with time under its respective section
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Intervention Suggestions'),
-      ),
-      body: ListView.builder(
-        itemCount: widget.exerciseSuggestionsWithTime.length,
-        itemBuilder: (context, index) {
-          final suggestion = widget.exerciseSuggestionsWithTime[index];
-          return ListTile(
-            title: Text(suggestion['exercise']),
-            subtitle:
-                Text("for ${suggestion['time'].toStringAsFixed(2)} minutes"),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class InterventionPage extends StatefulWidget {
-  final List<String> exerciseSuggestions;
-  final List<dynamic>? exerciseSuggestionsWithTime;
-
-  const InterventionPage(
-      {Key? key,
-      required this.exerciseSuggestions,
-      this.exerciseSuggestionsWithTime})
-      : super(key: key);
-
-  @override
-  InterventionPageState createState() => InterventionPageState();
-}
-
-class InterventionPageState extends State<InterventionPage> {
-  @override
-  Widget build(BuildContext context) {
-    // Display the exercise suggestions
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Intervention Suggestions'),
-      ),
-      body: ListView.builder(
-        itemCount: widget.exerciseSuggestions.length,
-        itemBuilder: (context, index) {
-          final suggestion = widget.exerciseSuggestions[index];
-          return ListTile(
-            title: Text(suggestion),
-            // Optionally, display time if available
-            subtitle: widget.exerciseSuggestionsWithTime != null
-                ? Text(
-                    "for ${widget.exerciseSuggestionsWithTime![index]['time'].toStringAsFixed(2)} minutes")
-                : null,
-          );
         },
       ),
     );
