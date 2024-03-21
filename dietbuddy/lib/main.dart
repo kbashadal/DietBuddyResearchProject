@@ -808,7 +808,28 @@ class AddEntryPageState extends State<AddEntryPage> {
       };
       endpoint = 'http://127.0.0.1:5000/predictNonDrink';
     }
+    // check for total calories intake per day if exceeds limit show a option to choose from exercise, alternate food, open api chatbot
+    final currentDate =
+        DateTime.now().toString().split(' ')[0]; // Format: YYYY-MM-DD
+    final totalCaloriesUrl = Uri.parse(
+        'http://localhost:5000/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
+    final totalCaloriesResponse = await http.get(totalCaloriesUrl);
 
+    if (totalCaloriesResponse.statusCode == 200) {
+      final totalCaloriesData = json.decode(totalCaloriesResponse.body);
+      final totalCalories = totalCaloriesData['total_calories'];
+      // Assuming there's a daily calorie limit set, for example, 2000 calories
+      const dailyCalorieLimit = 20;
+      if (totalCalories > dailyCalorieLimit) {
+        await showInterventionDialog();
+        print(
+            'Total daily calorie intake of $totalCalories exceeds the limit of $dailyCalorieLimit. Consider exercising or choosing alternate foods.');
+        return null;
+      }
+    } else {
+      // Handle error in fetching total calories
+      print('Failed to fetch total daily calorie intake for $currentDate');
+    }
     // Call the Flask API for prediction
     final url = Uri.parse(endpoint);
     final response = await http.post(
@@ -870,6 +891,155 @@ class AddEntryPageState extends State<AddEntryPage> {
         print('Error: ${response.body}');
       }
       return null;
+    }
+  }
+
+  Future<void> showExerciseSuggestionsWithTime(int dailyCalorieLimit) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/suggestExerciseWithTime'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'dailyCalorieLimit': dailyCalorieLimit}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> suggestionsWithTime =
+          data['top_3_exercises_with_time'];
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Exercise Suggestions with Time"),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: suggestionsWithTime.map((suggestion) {
+                  return Text(
+                      "${suggestion['exercise']}:for ${suggestion['time'].toStringAsFixed(2)} minutes");
+                }).toList(),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the suggestions dialog
+                },
+                child: const Text("Close"),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      if (kDebugMode) {
+        print('Failed to fetch exercise suggestions with time');
+      }
+    }
+  }
+
+  Future<void> showExerciseSuggestions(int dailyCalorieLimit) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/suggestExercise'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'dailyCalorieLimit': dailyCalorieLimit}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<String> suggestions =
+          List<String>.from(data['top_3_suggestions']);
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Exercise Suggestions"),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children:
+                    suggestions.map((suggestion) => Text(suggestion)).toList(),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the suggestions dialog
+                },
+                child: const Text("Close"),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      if (kDebugMode) {
+        print('Failed to fetch exercise suggestions');
+      }
+    }
+  }
+
+  Future<void> showInterventionDialog() async {
+    final userEmail = Provider.of<UserProvider>(context, listen: false).email;
+    final currentDate =
+        DateTime.now().toString().split(' ')[0]; // Format: YYYY-MM-DD
+    final totalCaloriesUrl = Uri.parse(
+        'http://localhost:5000/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
+    final totalCaloriesResponse = await http.get(totalCaloriesUrl);
+
+    if (totalCaloriesResponse.statusCode == 200) {
+      final totalCaloriesData = json.decode(totalCaloriesResponse.body);
+      final totalCalories = totalCaloriesData['total_calories'];
+      const dailyCalorieLimit = 20; // Example daily calorie limit
+      if (totalCalories > dailyCalorieLimit) {
+        if (!mounted) return;
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Daily Calorie Limit Exceeded"),
+              content: const Text("Choose an option to proceed:"),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    showExerciseSuggestionsWithTime(
+                        dailyCalorieLimit); // Show exercise suggestions
+
+                    // Implement navigation to Suggest Exercise Page
+                  },
+                  child: const Text("Suggest Exercise"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // Implement navigation to Suggest Food Alternatives Page
+                  },
+                  child: const Text("Suggest Food Alternatives"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // Implement opening Chat Bot
+                  },
+                  child: const Text("Chat with DietBot"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context)
+                        .pop(); // Go back to the previous screen
+                  },
+                  child: const Text("Cancel"),
+                ),
+              ],
+            );
+          },
+        );
+        return; // Stop further execution after showing the dialog
+      }
+    } else {
+      print('Failed to fetch total daily calorie intake for $currentDate');
     }
   }
 

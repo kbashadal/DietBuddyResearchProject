@@ -389,13 +389,13 @@ def predictNonDrink():
     print("predictions",predictions)
     return jsonify({'calories': round(predictions[0],2)})
 
-@app.route('/suggestExecise', methods=['POST'])
+@app.route('/suggestExercise', methods=['POST'])
 def predict_exercises():
     # Extract 'calories' from the request
     model = joblib.load('calories_based_workout_predictor.pkl')
 
     data = request.get_json()
-    calories = data.get('calories')
+    calories = data.get('dailyCalorieLimit')
     
     # Check if calories is provided
     if calories is None:
@@ -410,11 +410,12 @@ def predict_exercises():
     # Assuming the model has a method to return class probabilities
     top_3_indices = prediction.argsort()[0][-3:][::-1]
     top_3_workouts = [model.classes_[i] for i in top_3_indices]
+    print("top_3_workouts",top_3_workouts)
     
     return jsonify({'top_3_suggestions': top_3_workouts})
 
 # Load the classification model
-classifier = joblib.load('exercise_classifier.pkl')
+
 
 # Function to load regressor models for the top exercises
 def load_regressors(top_exercises):
@@ -426,7 +427,7 @@ def load_regressors(top_exercises):
 def predictExerciseWithTime():
     # Extract 'calories' from the request
     data = request.get_json()
-    calories = data.get('calories')
+    calories = data.get('dailyCalorieLimit')
     
     if calories is None:
         return jsonify({'error': 'Missing parameter: calories'}), 400
@@ -436,6 +437,7 @@ def predictExerciseWithTime():
     input_df = pd.DataFrame({'calories': [calories], 'time': [0]})  # Dummy 'time' value, not used by the classifier
     
     # Predict the top 3 workout types
+    classifier = joblib.load('exercise_classifier.pkl')
     probs = classifier.predict_proba(input_df)[0]
     classes = classifier.classes_
     top_3_indices = np.argsort(probs)[-3:][::-1]  # Indices of top 3 classes
@@ -490,6 +492,38 @@ def total_calories_by_email_and_date():
     print("meals_output",meals_output)
 
     return jsonify({"Breakfast":meals_output["Breakfast"],"Lunch":meals_output["Lunch"],"Dinner":meals_output["Dinner"],"Others":meals_output["Others"]}), 200
+
+@app.route('/total_calories_by_email_per_day', methods=['GET'])
+def total_calories_by_email_and_date_simple():
+    email_id = request.args.get('email_id')
+    date_param = request.args.get('date')
+
+    if not email_id:
+        return jsonify({'error': 'Missing email_id parameter'}), 400
+    if not date_param:
+        return jsonify({'error': 'Missing date parameter'}), 400
+
+    try:
+        date_obj = datetime.datetime.strptime(date_param, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD.'}), 400
+
+    # Find user by email_id
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Query to fetch user meals for the specified date and calculate total calories
+    total_calories = db.session.query(
+        db.func.sum(UserMeals.calories)
+    ).filter(UserMeals.user_id == user.id, UserMeals.date == date_obj).scalar()
+
+    if total_calories is None:
+        return jsonify({'message': f'No meals found for the given user email on {date_param}.'}), 404
+
+    # Return the total calories
+    return jsonify({'total_calories': round(total_calories, 2)}), 200
+
 
 @app.route('/predictFromImage', methods=['POST'])
 def predictFromImage():
