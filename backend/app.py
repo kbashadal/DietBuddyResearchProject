@@ -96,6 +96,22 @@ class UserExerciseSuggestions(db.Model):
 
     def __repr__(self):
         return f'<UserExerciseSuggestions {self.user_id} {self.exercise_id}>'
+
+class UserAlternateFood(db.Model):
+    __tablename__ = 'user_alternate_food'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    food_item_name = db.Column(db.String(255), nullable=False)
+    suggested_on = db.Column(db.Date, default=datetime.date.today)
+    suggested_time = db.Column(db.Time, default=datetime.datetime.now().time)
+
+    # Relationships
+    user = db.relationship('User', backref=db.backref('alternate_food_suggestions', lazy=True))
+    food_item = db.relationship('FoodItems', foreign_keys=[food_item_name], primaryjoin="UserAlternateFood.food_item_name==FoodItems.FoodItemName", backref=db.backref('suggested_to_users', lazy=True))
+
+    def __repr__(self):
+        return f'<UserAlternateFood {self.user_id} {self.food_item_name}>'
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email_id = db.Column(db.String(120), unique=True, nullable=False)
@@ -130,6 +146,72 @@ def determine_bmi_category(bmi):
     else:
         return 'Obese'
 
+@app.route('/save_user_alternate_food', methods=['POST'])
+def save_user_alternate_food():
+    data = request.json
+    email = data.get('email')
+    food_item_name = data.get('foodItemName')
+
+    # Find user by email
+    user = User.query.filter_by(email_id=email).first()
+    if not user:
+        return jsonify({'error': 'User not found.'}), 404
+
+    # Check if food item exists
+    food_item = FoodItems.query.filter_by(FoodItemName=food_item_name).first()
+    if not food_item:
+        return jsonify({'error': 'Food item not found.'}), 404
+
+    # Create a new UserAlternateFood instance
+    new_alternate_food = UserAlternateFood(
+        user_id=user.id,
+        food_item_name=food_item_name,
+        suggested_on=datetime.date.today(),
+        suggested_time=datetime.datetime.now().time()
+    )
+
+    # Add to the session and commit
+    try:
+        db.session.add(new_alternate_food)
+        db.session.commit()
+        return jsonify({'message': 'Alternate food suggestion saved successfully.'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/get_user_alternate_food', methods=['GET'])
+def get_user_alternate_food():
+    email_id = request.args.get('emailId')
+    if not email_id:
+        return jsonify({'error': 'Missing email parameter'}), 400
+
+    # Find user by email
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Fetch UserAlternateFood for the user
+    alternate_foods = UserAlternateFood.query.filter_by(user_id=user.id).all()
+
+    if not alternate_foods:
+        return jsonify({'message': 'No alternate food suggestions found for the given user.'}), 404
+
+    # Serialize the alternate foods similar to exercise suggestions
+    alternate_foods_dict = {}
+    for alternate_food in alternate_foods:
+        food_item_name = alternate_food.food_item_name
+        if food_item_name not in alternate_foods_dict:
+            alternate_foods_dict[food_item_name] = {
+                'suggested_on': alternate_food.suggested_on.strftime('%Y-%m-%d'),
+                'suggested_time': alternate_food.suggested_time.strftime('%H:%M:%S'),
+                'food_item': {
+                    'name': food_item_name
+                }
+            }
+
+    alternate_foods_list = list(alternate_foods_dict.values())
+
+    return jsonify(alternate_foods_list), 200
 @app.route('/save_user_exercise_suggestion', methods=['POST'])
 def save_user_exercise_suggestion():
     data = request.json
@@ -733,10 +815,10 @@ def save_to_db(caloires_predicted):
         db.session.add(new_meal)
         print("new meal added")
     db.session.commit()
-@app.route('/alternate_food', methods=['GET'])
+@app.route('/get_alternate_food', methods=['GET'])
 def get_alternate_food():
     try:
-        target_calories = float(request.args.get('calories'))
+        target_calories = float(request.args.get('dailyCalorieLimit'))
     except (TypeError, ValueError):
         return jsonify({'error': 'Invalid or missing calories parameter'}), 400
 
@@ -760,15 +842,10 @@ def get_alternate_food():
 
     # Select the top 3 items with the smallest difference
     top_3_alternates = [item[0] for item in calorie_differences[:3]]
-
-    if top_3_alternates:
-        return jsonify([{
-            'FoodItemName': item.FoodItemName,
-            'Cals_per100grams': item.Cals_per100grams
-        } for item in top_3_alternates]), 200
+    if top_3_alternates:        
+        return jsonify({"alternate_food_suggestions": [{item.FoodItemName: str(round(float(item.Cals_per100grams.replace('cal', '')),2))} for item in top_3_alternates]}), 200
     else:
         return jsonify({'message': 'No alternate food items found close to the target calories'}), 404
-    
 @app.route('/user_profile', methods=['GET'])
 def get_user_profile():
     email_id = request.args.get('email_id')

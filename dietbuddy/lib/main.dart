@@ -987,6 +987,23 @@ class AddEntryPageState extends State<AddEntryPage> {
     }
   }
 
+  Future<void> saveUserAlternateFood(String email, String foodItemName) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/save_user_alternate_food'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'foodItemName': foodItemName,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      if (kDebugMode) {
+        print('Failed to save alternate food suggestion for $foodItemName');
+      }
+    }
+  }
+
   Future<void> showExerciseSuggestions(int dailyCalorieLimit) async {
     final userEmail = Provider.of<UserProvider>(context, listen: false).email;
 
@@ -1043,6 +1060,57 @@ class AddEntryPageState extends State<AddEntryPage> {
     }
   }
 
+  Future<void> showAlternateFoodSuggestions(int dailyCalorieLimit) async {
+    final userEmail = Provider.of<UserProvider>(context, listen: false).email;
+    final userEmailNonNull = userEmail!; // Ensure userEmail is not null
+
+    final response = await http.get(
+      Uri.parse(
+          'http://127.0.0.1:5000/get_alternate_food?dailyCalorieLimit=$dailyCalorieLimit'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<Map<String, dynamic>> suggestions =
+          List<Map<String, dynamic>>.from(data['alternate_food_suggestions']);
+      for (Map<String, dynamic> suggestion in suggestions) {
+        String foodItemName = suggestion.keys.first;
+        await saveUserAlternateFood(userEmailNonNull, foodItemName);
+      }
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Alternate Food Suggestions"),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: suggestions.map((suggestion) {
+                  return Text(
+                      "${suggestion.keys.first}: ${suggestion.values.first} calories ");
+                }).toList(),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  // Removed the incorrect Navigator.push to InterventionPage with exerciseSuggestions
+                },
+                child: const Text("Close"),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      if (kDebugMode) {
+        print('Failed to fetch alternate food suggestions');
+      }
+    }
+  }
+
   Future<void> showInterventionDialog() async {
     final userEmail = Provider.of<UserProvider>(context, listen: false).email;
     final currentDate =
@@ -1077,6 +1145,7 @@ class AddEntryPageState extends State<AddEntryPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
+                    showAlternateFoodSuggestions(dailyCalorieLimit);
                     // Implement navigation to Suggest Food Alternatives Page
                   },
                   child: const Text("Suggest Food Alternatives"),
@@ -1847,11 +1916,36 @@ class InterventionsSummaryPage extends StatefulWidget {
 
 class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
   late Future<List<dynamic>> _exerciseSuggestions;
+  late Future<List<dynamic>> _alternateFoodSuggestions;
 
   @override
   void initState() {
     super.initState();
     _exerciseSuggestions = fetchExerciseSuggestions(context);
+    _alternateFoodSuggestions = fetchAlternateFoodSuggestions(context);
+  }
+
+  Future<List<dynamic>> fetchAlternateFoodSuggestions(
+      BuildContext context) async {
+    // Obtain the user's email from UserProvider
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.email;
+
+    // Ensure userEmail is not null or handle it appropriately
+    if (userEmail == null) {
+      throw Exception('User email is not available');
+    }
+
+    final response = await http.get(
+      Uri.parse(
+          'http://localhost:5000/get_user_alternate_food?emailId=$userEmail'),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load exercise suggestions');
+    }
   }
 
   Future<List<dynamic>> fetchExerciseSuggestions(BuildContext context) async {
@@ -1928,10 +2022,45 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
             title: const Text('Food'),
             leading: const Icon(Icons.fastfood),
             children: <Widget>[
-              ListTile(
-                title: const Text('View Food Alternatives'),
-                onTap: () {
-                  // Navigate to Food Alternatives Page
+              FutureBuilder<List<dynamic>>(
+                future: _alternateFoodSuggestions,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          var suggestion = snapshot.data![index];
+                          // Accessing the nested map for food item details
+                          var foodItemDetails = suggestion['food_item'];
+                          // Assuming 'name' is always present in the food item details
+                          String foodItemName = foodItemDetails['name'];
+                          // Accessing 'suggested_on' and 'suggested_time' directly from the suggestion map
+                          String suggestedOn = suggestion['suggested_on'];
+                          String suggestedTime = suggestion['suggested_time'];
+
+                          return ListTile(
+                            title: Text(foodItemName),
+                            subtitle: Text(
+                                'Suggested on: $suggestedOn at $suggestedTime'),
+                          );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return ListTile(
+                        title: Text('Error: ${snapshot.error}'),
+                      );
+                    } else {
+                      return const ListTile(
+                        title: Text('No food alternatives available.'),
+                      );
+                    }
+                  }
+                  return const ListTile(
+                    title: CircularProgressIndicator(),
+                  );
                 },
               ),
             ],
