@@ -212,6 +212,7 @@ def get_user_alternate_food():
     alternate_foods_list = list(alternate_foods_dict.values())
 
     return jsonify(alternate_foods_list), 200
+
 @app.route('/save_user_exercise_suggestion', methods=['POST'])
 def save_user_exercise_suggestion():
     data = request.json
@@ -640,6 +641,7 @@ def load_regressors(top_exercises):
     for exercise in top_exercises:
         regressors[exercise] = joblib.load(f'{exercise}_time_regressor.pkl')
     return regressors
+
 @app.route('/suggestExerciseWithTime', methods=['POST'])
 def predictExerciseWithTime():
     # Extract 'calories' from the request
@@ -708,7 +710,12 @@ def total_calories_by_email_and_date():
     meals_output = {meal_type_name: round(total_calories, 2) for meal_type_name, total_calories in user_meals}
     print("meals_output",meals_output)
 
-    return jsonify({"Breakfast":meals_output["Breakfast"],"Lunch":meals_output["Lunch"],"Dinner":meals_output["Dinner"],"Others":meals_output["Others"]}), 200
+    return jsonify({
+        "Breakfast": meals_output["Breakfast"] if "Breakfast" in meals_output else 0,
+        "Lunch": meals_output["Lunch"] if "Lunch" in meals_output else 0,
+        "Dinner": meals_output["Dinner"] if "Dinner" in meals_output else 0,
+        "Others": meals_output["Others"] if "Others" in meals_output else 0
+    }), 200
 
 @app.route('/total_calories_by_email_per_day', methods=['GET'])
 def total_calories_by_email_and_date_simple():
@@ -815,6 +822,7 @@ def save_to_db(caloires_predicted):
         db.session.add(new_meal)
         print("new meal added")
     db.session.commit()
+
 @app.route('/get_alternate_food', methods=['GET'])
 def get_alternate_food():
     try:
@@ -846,6 +854,7 @@ def get_alternate_food():
         return jsonify({"alternate_food_suggestions": [{item.FoodItemName: str(round(float(item.Cals_per100grams.replace('cal', '')),2))} for item in top_3_alternates]}), 200
     else:
         return jsonify({'message': 'No alternate food items found close to the target calories'}), 404
+
 @app.route('/user_profile', methods=['GET'])
 def get_user_profile():
     email_id = request.args.get('email_id')
@@ -868,6 +877,7 @@ def get_user_profile():
     }
 
     return jsonify(user_profile), 200   
+
 def insert_unique_categories():
     unique_categories = set()
     # Extract categories from caffeine.csv

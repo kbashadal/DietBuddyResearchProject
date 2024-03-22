@@ -1,3 +1,5 @@
+import 'package:dietbuddy/interventions_summary_page.dart';
+import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -67,7 +69,14 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('View History'),
+        title: const Text(
+          'DietBuddy',
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.green, // Adjust the color to match your branding
+          ),
+        ),
       ),
       body: Center(
         child: Column(
@@ -86,6 +95,54 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+            tooltip: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.tips_and_updates),
+            label: 'Interventions',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+            tooltip: 'History',
+          ),
+        ],
+        selectedItemColor: Colors.green,
+        onTap: (index) {
+          // Check the index and navigate accordingly
+          if (index == 2) {
+            // Assuming the User Profile is the third item
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+            );
+          }
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const InterventionsSummaryPage()),
+            );
+          }
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => MealSummaryPage(
+                        email: Provider.of<UserProvider>(context, listen: false)
+                                .email ??
+                            '',
+                      )),
+            );
+          }
+          // Handle other indices if needed
+        },
       ),
     );
   }

@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:dietbuddy/home_page.dart';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_options_page.dart';
 import 'package:dietbuddy/user_profile_page.dart';
+import 'package:dietbuddy/user_provider.dart';
 import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -20,11 +22,39 @@ class MealSummaryPage extends StatefulWidget {
 
 class MealSummaryPageState extends State<MealSummaryPage> {
   late Map<String, double> _mealData = {};
+  String _userName = ''; // Add a variable to store the user's name
 
   @override
   void initState() {
     super.initState();
     _fetchMealDataSummary();
+    _fetchUserProfile(); // Fetch user profile on init
+  }
+
+  Future<void> _fetchUserProfile() async {
+    const url =
+        'http://127.0.0.1:5000/user_profile'; // Adjust the URL as needed
+    try {
+      final response = await http.get(
+        Uri.parse('$url?email_id=${widget.email}'),
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        setState(() {
+          _userName = responseBody[
+              'full_name']; // Assuming the key for the user's name is 'name'
+        });
+      } else {
+        if (kDebugMode) {
+          print('Failed to fetch user profile');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error occurred while fetching user profile: $e');
+      }
+    }
   }
 
   double getTotalCalories() {
@@ -61,59 +91,175 @@ class MealSummaryPageState extends State<MealSummaryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meal Summary'),
+        title: const Text(
+          'DietBuddy',
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.green, // Adjust the color to match your branding
+          ),
+        ),
       ),
       body: Stack(
         children: [
           Column(
             children: [
-              Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
                   child: Text(
                     'Today: ${DateTime.now().toLocal().toString().split(' ')[0]}',
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
-              Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    'Total Calories: ${getTotalCalories().toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: _mealData.isNotEmpty
-                    ? SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.2,
-                        child: charts.BarChart(
-                          _createChartData(),
-                          animate: true,
-                          behaviors: [
-                            charts.SeriesLegend(
-                              position: charts.BehaviorPosition.top,
-                              horizontalFirst: false,
-                              cellPadding: const EdgeInsets.only(
-                                  right: 2.0, bottom: 2.0),
-                              showMeasures: true,
-                              legendDefaultMeasure:
-                                  charts.LegendDefaultMeasure.lastValue,
-                              entryTextStyle: charts.TextStyleSpec(
-                                  color:
-                                      charts.MaterialPalette.gray.shadeDefault,
-                                  fontFamily: 'Georgia',
-                                  fontSize: 11),
-                            ),
-                          ],
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Align(
+                  alignment: Alignment.centerLeft, // Align text to the left
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const UserProfilePage()),
+                      );
+                    },
+                    child: RichText(
+                      text: TextSpan(
+                        text:
+                            'Welcome $_userName', // Use the _userName variable
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
                         ),
-                      )
-                    : const CircularProgressIndicator(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              ExpansionTile(
+                initiallyExpanded: true,
+                leading: const Icon(Icons.trending_up, color: Colors.red),
+                title: const Text('Activity',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                children: <Widget>[
+                  ListTile(
+                    title: Text(
+                      'Total Calories: ${getTotalCalories().toStringAsFixed(2)}',
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                  ),
+                  _mealData.isNotEmpty
+                      ? SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                          child: charts.BarChart(
+                            _createChartData(),
+                            animate: true,
+                            vertical: false,
+                            barGroupingType: charts.BarGroupingType.grouped,
+                            behaviors: [
+                              // charts.ChartTitle('',
+                              //     behaviorPosition:
+                              //         charts.BehaviorPosition.start,
+                              //     titleOutsideJustification: charts
+                              //         .OutsideJustification.middleDrawArea),
+                              charts.SeriesLegend(
+                                position: charts.BehaviorPosition.top,
+                                horizontalFirst: false,
+                                cellPadding: const EdgeInsets.only(
+                                    right: 4.0, bottom: 4.0),
+                                showMeasures: true,
+                                legendDefaultMeasure:
+                                    charts.LegendDefaultMeasure.lastValue,
+                                entryTextStyle: charts.TextStyleSpec(
+                                    color: charts
+                                        .MaterialPalette.gray.shadeDefault,
+                                    fontFamily: 'Georgia',
+                                    fontSize: 9),
+                              ),
+                            ],
+                          ),
+                        )
+                      : const Center(child: CircularProgressIndicator()),
+                ],
+              ),
+              const ExpansionTile(
+                leading: Icon(Icons.fitness_center, color: Colors.blue),
+                title: Text('Training Tips',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                children: <Widget>[
+                  ListTile(
+                    title: Text(
+                      'Stay hydrated during your workouts.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Incorporate both cardio and strength training exercises.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Rest is crucial, don\'t forget to take rest days.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Maintain a balanced diet to support your training.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+              const ExpansionTile(
+                leading: Icon(Icons.star, color: Colors.amber),
+                title: Text('Awards',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                children: <Widget>[
+                  ListTile(
+                    title: Text(
+                      'Consistency Master - For logging meals 30 days in a row.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Balanced Diet Achiever - For maintaining a balanced diet for a week.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Hydration Hero - For meeting water intake goals 7 days in a row.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Fitness Fanatic - For completing all workout goals in a month.',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -140,20 +286,20 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                             );
                           },
                         ),
-                        ListTile(
-                          leading: const Icon(Icons.history),
-                          title: const Text('View History'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ViewHistoryPage()),
-                            ); // Close the menu
-                            // Navigate to View History Page
-                          },
-                        ),
+                        // ListTile(
+                        //   leading: const Icon(Icons.history),
+                        //   title: const Text('View History'),
+                        //   onTap: () {
+                        //     Navigator.pop(context);
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //           builder: (context) =>
+                        //               const ViewHistoryPage()),
+                        //     ); // Close the menu
+                        //     // Navigate to View History Page
+                        //   },
+                        // ),
                         ListTile(
                           leading: const Icon(Icons.person),
                           title: const Text('View Profile'),
@@ -168,20 +314,20 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                             // Navigate to View History Page
                           },
                         ),
-                        ListTile(
-                          leading: const Icon(Icons.settings_suggest_rounded),
-                          title: const Text('View Interventions'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const InterventionsSummaryPage()),
-                            ); // Close the menu
-                            // Navigate to View History Page
-                          },
-                        ),
+                        // ListTile(
+                        //   leading: const Icon(Icons.settings_suggest_rounded),
+                        //   title: const Text('View Interventions'),
+                        //   onTap: () {
+                        //     Navigator.pop(context);
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //           builder: (context) =>
+                        //               const InterventionsSummaryPage()),
+                        //     ); // Close the menu
+                        //     // Navigate to View History Page
+                        //   },
+                        // ),
                       ],
                     );
                   },
@@ -192,6 +338,52 @@ class MealSummaryPageState extends State<MealSummaryPage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+            tooltip: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.tips_and_updates),
+            label: 'Interventions',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+            tooltip: 'History',
+          ),
+        ],
+        selectedItemColor: Colors.green,
+        onTap: (index) {
+          // Check the index and navigate accordingly
+          if (index == 2) {
+            // Assuming the User Profile is the third item
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+            );
+          }
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const InterventionsSummaryPage()),
+            );
+          }
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => MealSummaryPage(
+                        email: widget.email,
+                      )),
+            );
+          }
+          // Handle other indices if needed
+        },
       ),
     );
   }

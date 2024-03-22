@@ -103,18 +103,24 @@ class RegistrationPageState extends State<RegistrationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registration'),
+        title: const Text(
+          'DietBuddy',
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.green, // Adjust the color to match your branding
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(
-              'DietBuddy',
-              style: Theme.of(context).textTheme.headlineMedium,
-              textAlign: TextAlign.center,
-            ),
+            SizedBox(
+                height: MediaQuery.of(context).size.height *
+                    0.1), // Adjust the space as needed
+
             const SizedBox(height: 20),
             TextFormField(
               controller: _fullNameController,
@@ -205,9 +211,18 @@ class RegistrationPageState extends State<RegistrationPage> {
                 // Handle registration logic
                 registerUser(context);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 15.0),
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                ),
+              ),
               child: const Text('Next'),
             ),
-            // Upload Profile Pic option and image display removed
           ],
         ),
       ),

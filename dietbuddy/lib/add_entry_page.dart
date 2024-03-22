@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/user_provider.dart';
+import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -736,9 +737,14 @@ class AddEntryPageState extends State<AddEntryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Meal Type: $mealType',
-            style: const TextStyle(fontSize: 20)), // Display the meal type
-        // Other AppBar properties as needed
+        title: const Text(
+          'DietBuddy',
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.green, // Adjust the color to match your branding
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -830,6 +836,54 @@ class AddEntryPageState extends State<AddEntryPage> {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+            tooltip: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.tips_and_updates),
+            label: 'Interventions',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+            tooltip: 'History',
+          ),
+        ],
+        selectedItemColor: Colors.green,
+        onTap: (index) {
+          // Check the index and navigate accordingly
+          if (index == 2) {
+            // Assuming the User Profile is the third item
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+            );
+          }
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const InterventionsSummaryPage()),
+            );
+          }
+          if (index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => MealSummaryPage(
+                        email: Provider.of<UserProvider>(context, listen: false)
+                                .email ??
+                            '',
+                      )),
+            );
+          }
+          // Handle other indices if needed
+        },
       ),
     );
   }

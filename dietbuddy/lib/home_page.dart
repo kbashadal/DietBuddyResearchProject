@@ -15,7 +15,14 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DietBuddy'),
+        title: const Text(
+          'DietBuddy',
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.green, // Adjust the color to match your branding
+          ),
+        ),
       ),
       body: Center(
         child: Column(
