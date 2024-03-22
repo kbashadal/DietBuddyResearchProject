@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_options_page.dart';
@@ -132,6 +133,18 @@ class AddEntryPageState extends State<AddEntryPage> {
     }
   }
 
+  Future<double> fetchSuggestedCaloriesLimit() async {
+    final profileUrl = Uri.parse(
+        'http://localhost:5000/user_profile?email_id=${Provider.of<UserProvider>(context, listen: false).email}');
+    final profileResponse = await http.get(profileUrl);
+    if (profileResponse.statusCode == 200) {
+      final profileData = json.decode(profileResponse.body);
+      return profileData['suggested_calories'];
+    } else {
+      throw Exception('Failed to load suggested calories limit');
+    }
+  }
+
   Future<void> fetchItems(String category) async {
     final response = await http.get(
         Uri.parse('http://localhost:5000/food_items_by_category/$category'));
@@ -197,7 +210,9 @@ class AddEntryPageState extends State<AddEntryPage> {
       final totalCaloriesData = json.decode(totalCaloriesResponse.body);
       final totalCalories = totalCaloriesData['total_calories'];
       // Assuming there's a daily calorie limit set, for example, 2000 calories
-      const dailyCalorieLimit = 20;
+
+      final double dailyCalorieLimit = await fetchSuggestedCaloriesLimit();
+
       if (totalCalories > dailyCalorieLimit) {
         await showInterventionDialog();
         if (kDebugMode) {
@@ -719,6 +734,11 @@ class AddEntryPageState extends State<AddEntryPage> {
                     if (response != null) {
                       Navigator.of(context)
                           .pop(); // Use context instead of dialogContext
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MealOptionsPage()),
+                      );
                       setState(() {
                         _sendDataToAPIFuture = _userMealsByEmail(mealType!);
                       });
@@ -786,56 +806,56 @@ class AddEntryPageState extends State<AddEntryPage> {
             // ... Implement Awards section based on the design
 
             // Show the table
-            FutureBuilder<Map<String, List<MealData>>>(
-              future:
-                  _sendDataToAPIFuture, // Ensure this future returns Map<String, List<MealData>>
-              builder: (BuildContext context,
-                  AsyncSnapshot<Map<String, List<MealData>>> snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (snapshot.hasData) {
-                    // Define the columns for the DataTable
-                    List<DataColumn> columns = const [
-                      DataColumn(label: Text('Name')),
-                      DataColumn(label: Text('Calories')),
-                    ];
+            // FutureBuilder<Map<String, List<MealData>>>(
+            //   future:
+            //       _sendDataToAPIFuture, // Ensure this future returns Map<String, List<MealData>>
+            //   builder: (BuildContext context,
+            //       AsyncSnapshot<Map<String, List<MealData>>> snapshot) {
+            //     if (snapshot.connectionState == ConnectionState.done) {
+            //       if (snapshot.hasData) {
+            //         // Define the columns for the DataTable
+            //         List<DataColumn> columns = const [
+            //           DataColumn(label: Text('Name')),
+            //           DataColumn(label: Text('Calories')),
+            //         ];
 
-                    // Create rows for the DataTable
-                    List<DataRow> rows = [];
+            //         // Create rows for the DataTable
+            //         List<DataRow> rows = [];
 
-                    snapshot.data!.forEach((mealType, meals) {
-                      for (MealData meal in meals) {
-                        List<DataCell> cells = [
-                          DataCell(Text(meal.name)),
-                          DataCell(Text('${meal.calories}')),
-                        ];
-                        rows.add(DataRow(cells: cells));
-                      }
-                    });
-                    if (predictedImageCaloriesWithFoodItem != null) {
-                      predictedImageCaloriesWithFoodItem!.forEach((key, value) {
-                        List<DataCell> cells = [
-                          DataCell(Text(key)), // Name of the food item
-                          DataCell(Text('$value')), // Calories
-                        ];
-                        rows.add(DataRow(cells: cells));
-                      });
-                    }
+            //         snapshot.data!.forEach((mealType, meals) {
+            //           for (MealData meal in meals) {
+            //             List<DataCell> cells = [
+            //               DataCell(Text(meal.name)),
+            //               DataCell(Text('${meal.calories}')),
+            //             ];
+            //             rows.add(DataRow(cells: cells));
+            //           }
+            //         });
+            //         if (predictedImageCaloriesWithFoodItem != null) {
+            //           predictedImageCaloriesWithFoodItem!.forEach((key, value) {
+            //             List<DataCell> cells = [
+            //               DataCell(Text(key)), // Name of the food item
+            //               DataCell(Text('$value')), // Calories
+            //             ];
+            //             rows.add(DataRow(cells: cells));
+            //           });
+            //         }
 
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: columns,
-                        rows: rows,
-                      ),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  }
-                }
-                // By default, show a loading spinner
-                return const CircularProgressIndicator();
-              },
-            ),
+            //         return SingleChildScrollView(
+            //           scrollDirection: Axis.horizontal,
+            //           child: DataTable(
+            //             columns: columns,
+            //             rows: rows,
+            //           ),
+            //         );
+            //       } else if (snapshot.hasError) {
+            //         return Text('Error: ${snapshot.error}');
+            //       }
+            //     }
+            //     // By default, show a loading spinner
+            //     return const CircularProgressIndicator();
+            //   },
+            // ),
           ],
         ),
       ),

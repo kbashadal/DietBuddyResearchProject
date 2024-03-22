@@ -123,6 +123,7 @@ class User(db.Model):
     profile_pic = db.Column(db.String(255), nullable=True)  # Add this line for profile picture
     bmi = db.Column(db.Float, nullable=True)  # Add this line for BMI
     bmi_category = db.Column(db.String(50), nullable=True)  # Add this line for BMI category
+    suggested_calories = db.Column(db.Float, nullable=True)  # Add this line for suggested calories
 
 
 
@@ -323,6 +324,48 @@ def get_user_exercise_suggestions_by_date():
     suggestions_list = list(suggestions_dict.values())
     return jsonify(suggestions_list), 200
 
+#To calculate the suggested calories as per industry standards,
+# you can use the Mifflin-St Jeor Equation for Basal Metabolic Rate (BMR)
+# and then adjust it based on the activity level. 
+# The Total Daily Energy Expenditure (TDEE) is calculated by multiplying the BMR with 
+# an activity factor. Here's a separate method that takes age, gender, weight, height, and BMI 
+# to calculate the suggested calories. 
+def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi, activity_level):
+    """
+    Calculate suggested daily calories intake.
+
+    Parameters:
+    - age: in years
+    - gender: 'male' or 'female'
+    - weight_kg: weight in kilograms
+    - height_cm: height in centimeters
+    - bmi: Body Mass Index
+    - activity_level: 'Sedentary', 'Lightly active', 'Moderately active', or 'Very active'
+
+    Returns:
+    - suggested_calories: Estimated daily calories intake
+    """
+    # Calculate BMR using the Mifflin-St Jeor Equation
+    if gender == 'male':
+        bmr = (10 * float(weight_kg)) + (6.25 * float(height_cm)) - (5 * age) + 5
+    else:  # female
+        bmr = (10 * float(weight_kg)) + (6.25 * float(height_cm)) - (5 * age) - 161
+
+    # Map activity level to a multiplier
+    activity_multipliers = {
+        'Sedentary': 1.2,
+        'Lightly active': 1.375,
+        'Moderately active': 1.55,
+        'Very active': 1.725
+    }
+
+    activity_factor = activity_multipliers.get(activity_level, 1.2)  # Default to Sedentary if not found
+
+    # Calculate Total Daily Energy Expenditure (TDEE) by multiplying BMR with the activity level
+    suggested_calories = bmr * activity_factor
+
+    return suggested_calories
+
 @app.route('/register', methods=['POST'])
 def register_user():
     # insert_food_items()
@@ -331,6 +374,10 @@ def register_user():
     height_in_meters = int(data['height']) / 100
     bmi = float(data['weight']) / (height_in_meters ** 2)
     bmi_category = determine_bmi_category(bmi)  # Determine the BMI category
+    activity_level = data['activityLevel']
+    date_of_birth = datetime.datetime.strptime(data['dateOfBirth'], '%Y-%m-%d').date()
+    today = datetime.datetime.today().date()
+    age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
 
     # Handle profile picture upload
     profile_pic_file = request.files.get('profilePic')
@@ -346,9 +393,11 @@ def register_user():
             profile_pic_path = file_path
         else:
             profile_pic_path = None
+        suggested_calories = calculate_suggested_calories(age=age, gender=data['gender'], weight_kg=data['weight'], height_cm=data['height'], bmi=bmi, activity_level=data['activityLevel'])
+        print("suggested_calories",suggested_calories)
         new_user = User(email_id=data['email'], full_name=data['fullName'],
                         height=height_in_meters, weight=data['weight'], date_of_birth=data['dateOfBirth'],
-                        profile_pic=profile_pic_path, bmi=bmi, bmi_category=bmi_category)
+                        profile_pic=profile_pic_path, bmi=bmi, bmi_category=bmi_category,suggested_calories=suggested_calories)
         new_user.set_password(data['password'])  # Set the hashed password
         db.session.add(new_user)
         db.session.commit()
@@ -873,7 +922,8 @@ def get_user_profile():
         'date_of_birth': user.date_of_birth.strftime('%Y-%m-%d'),
         'profile_pic': user.profile_pic,
         'bmi': user.bmi,
-        'bmi_category': user.bmi_category
+        'bmi_category': user.bmi_category,
+        'suggested_calories': user.suggested_calories
     }
 
     return jsonify(user_profile), 200   

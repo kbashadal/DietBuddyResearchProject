@@ -98,24 +98,33 @@ class UserProfilePageState extends State<UserProfilePage> {
                             const InputDecoration(labelText: 'BMI Category'),
                         enabled: false, // Makes the field uneditable
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Set Calories Goal',
-                        style: Theme.of(context).textTheme.titleLarge,
+                      TextFormField(
+                        initialValue:
+                            snapshot.data!['suggested_calories'].toString(),
+                        decoration: const InputDecoration(
+                            labelText: 'Suggested Calories'),
+                        enabled: false, // Makes the field uneditable
                       ),
-                      Slider(
-                        value: (snapshot.data!['calories_goal'] ?? 2000)
-                            .toDouble(),
-                        min: 1000,
-                        max: 5000,
-                        divisions: 80,
-                        label: '${snapshot.data!['calories_goal']}',
-                        onChanged: (double value) {
-                          setState(() {
-                            snapshot.data!['calories_goal'] = value.round();
-                          });
-                        },
+                      Tooltip(
+                        message:
+                            '${snapshot.data!['suggested_calories']} calories',
+                        child: Slider(
+                          value:
+                              snapshot.data!['suggested_calories'].toDouble(),
+                          min: 1000,
+                          max: 4000,
+                          divisions: 60,
+                          label:
+                              '${snapshot.data!['suggested_calories']} calories',
+                          onChanged: (double value) {
+                            setState(() {
+                              snapshot.data!['suggested_calories'] =
+                                  value.round();
+                            });
+                          },
+                        ),
                       ),
+
                       ElevatedButton(
                         onPressed: () {
                           Navigator.of(context)

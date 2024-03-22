@@ -21,6 +21,7 @@ class RegistrationPageState extends State<RegistrationPage> {
   DateTime _selectedDate = DateTime.now();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
+  String _selectedActivityLevel = 'Sedentary'; // Default to Sedentary
 
   @override
   void dispose() {
@@ -46,7 +47,8 @@ class RegistrationPageState extends State<RegistrationPage> {
       ..fields['gender'] = _selectedGender
       ..fields['height'] = _heightController.text
       ..fields['weight'] = _weightController.text
-      ..fields['dateOfBirth'] = "${_selectedDate.toLocal()}".split(' ')[0];
+      ..fields['dateOfBirth'] = "${_selectedDate.toLocal()}".split(' ')[0]
+      ..fields['activityLevel'] = _selectedActivityLevel;
 
     // Image upload logic removed
 
@@ -175,6 +177,29 @@ class RegistrationPageState extends State<RegistrationPage> {
               },
               decoration: const InputDecoration(
                 labelText: 'Gender',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            DropdownButtonFormField<String>(
+              value: _selectedActivityLevel,
+              items: <String>[
+                'Sedentary',
+                'Lightly Active',
+                'Moderately Active',
+                'Very Active'
+              ].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedActivityLevel = newValue!;
+                });
+              },
+              decoration: const InputDecoration(
+                labelText: 'Activity Level',
                 border: OutlineInputBorder(),
               ),
             ),

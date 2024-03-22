@@ -71,27 +71,44 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'DietBuddy',
           style: TextStyle(
-            fontSize: 36,
+            fontSize: 24, // Adjusted for better proportionality
             fontWeight: FontWeight.bold,
-            color: Colors.green, // Adjust the color to match your branding
+            color: Theme.of(context)
+                .primaryColor, // Use theme color for consistency
           ),
         ),
+        backgroundColor: Colors.white, // Set a neutral color for the AppBar
+        elevation: 0, // Remove shadow for a modern look
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0), // Add padding for better spacing
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.start, // Adjust alignment for natural flow
           children: <Widget>[
             ElevatedButton(
               onPressed: () => _selectDate(context),
+              style: ElevatedButton.styleFrom(
+                // backgroundColor: Theme.of(context)
+                //     .colorScheme
+                //     .onSurface, // Use theme color for consistency
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                      8), // Rounded corners for a modern look
+                ),
+              ),
               child: const Text('Select Date'),
             ),
             const SizedBox(height: 20),
             if (_selectedDate != null)
               Text(
-                  'Selected Date: ${_selectedDate!.toLocal().toString().split(' ')[0]}'),
+                'Selected Date: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
+                style: const TextStyle(
+                    fontSize: 16), // Adjust font size for readability
+              ),
             Expanded(
               child: _createBarChart(),
             ),
@@ -103,7 +120,6 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
-            tooltip: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.tips_and_updates),
@@ -112,38 +128,42 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'History',
-            tooltip: 'History',
           ),
         ],
-        selectedItemColor: Colors.green,
+        selectedItemColor:
+            Theme.of(context).primaryColor, // Use theme color for consistency
+        unselectedItemColor:
+            Colors.grey, // Use a neutral color for unselected items
         onTap: (index) {
-          // Check the index and navigate accordingly
-          if (index == 2) {
-            // Assuming the User Profile is the third item
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
-            );
+          // Navigation logic
+          switch (index) {
+            case 0:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => MealSummaryPage(
+                          email:
+                              Provider.of<UserProvider>(context, listen: false)
+                                      .email ??
+                                  '',
+                        )),
+              );
+              break;
+            case 1:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const InterventionsSummaryPage()),
+              );
+              break;
+            case 2:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ViewHistoryPage()),
+              );
+              break;
           }
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const InterventionsSummaryPage()),
-            );
-          }
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => MealSummaryPage(
-                        email: Provider.of<UserProvider>(context, listen: false)
-                                .email ??
-                            '',
-                      )),
-            );
-          }
-          // Handle other indices if needed
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -154,7 +174,8 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
               return Wrap(
                 children: <Widget>[
                   ListTile(
-                    leading: const Icon(Icons.add),
+                    leading:
+                        Icon(Icons.add, color: Theme.of(context).primaryColor),
                     title: const Text('Add Meal'),
                     onTap: () {
                       Navigator.pop(context); // Close the menu
@@ -166,7 +187,8 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.person),
+                    leading: Icon(Icons.person,
+                        color: Theme.of(context).primaryColor),
                     title: const Text('View Profile'),
                     onTap: () {
                       Navigator.pop(context);
@@ -183,7 +205,9 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
             },
           );
         },
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context)
+            .colorScheme
+            .secondary, // Use theme color for consistency
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
