@@ -1,10 +1,8 @@
 import 'dart:convert';
 
-import 'package:dietbuddy/home_page.dart';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_options_page.dart';
 import 'package:dietbuddy/user_profile_page.dart';
-import 'package:dietbuddy/user_provider.dart';
 import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

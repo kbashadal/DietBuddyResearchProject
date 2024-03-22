@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dietbuddy/add_entry_page.dart';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
+import 'package:dietbuddy/user_profile_page.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/foundation.dart';
@@ -143,6 +144,46 @@ class MealOptionsPageState extends State<MealOptionsPage> {
           }
           // Handle other indices if needed
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) {
+              return Wrap(
+                children: <Widget>[
+                  ListTile(
+                    leading: const Icon(Icons.add),
+                    title: const Text('Add Meal'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the menu
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MealOptionsPage()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.person),
+                    title: const Text('View Profile'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const UserProfilePage()),
+                      ); // Close the menu
+                      // Navigate to View Profile Page
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
