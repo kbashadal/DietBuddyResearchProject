@@ -148,12 +148,30 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                 title: const Text('Activity',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 children: <Widget>[
-                  ListTile(
-                    title: Text(
-                      'Total Calories: ${getTotalCalories().toStringAsFixed(2)}',
-                      textAlign: TextAlign.left,
-                      style: const TextStyle(fontSize: 10),
-                    ),
+                  FutureBuilder<double>(
+                    future:
+                        fetchSuggestedCaloriesLimit(), // Assuming this function is defined and returns Future<double>
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return ListTile(
+                          title: Text(
+                            'Total Calories: ${getTotalCalories().toStringAsFixed(2)} / ${snapshot.data}',
+                            textAlign: TextAlign.left,
+                            style: const TextStyle(fontSize: 10),
+                          ),
+                        );
+                      } else if (snapshot.hasError) {
+                        return const ListTile(
+                          title: Text(
+                            'Error fetching suggested calories',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        );
+                      }
+                      // By default, show a loading spinner.
+                      return const Center(child: CircularProgressIndicator());
+                    },
                   ),
                   _mealData.isNotEmpty
                       ? SizedBox(
@@ -190,34 +208,34 @@ class MealSummaryPageState extends State<MealSummaryPage> {
                 ],
               ),
               const ExpansionTile(
-                leading: Icon(Icons.fitness_center, color: Colors.blue),
-                title: Text('Training Tips',
+                leading: Icon(Icons.local_dining, color: Colors.green),
+                title: Text('Diet Tips',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 children: <Widget>[
                   ListTile(
                     title: Text(
-                      'Stay hydrated during your workouts.',
+                      'Eat a variety of foods to ensure a balanced diet.',
                       textAlign: TextAlign.left,
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
                   ListTile(
                     title: Text(
-                      'Incorporate both cardio and strength training exercises.',
+                      'Ensure your diet is rich in fruits and vegetables for essential vitamins and minerals.',
                       textAlign: TextAlign.left,
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
                   ListTile(
                     title: Text(
-                      'Rest is crucial, don\'t forget to take rest days.',
+                      'Limit intake of sugars and saturated fats for better health outcomes.',
                       textAlign: TextAlign.left,
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
                   ListTile(
                     title: Text(
-                      'Maintain a balanced diet to support your training.',
+                      'Stay hydrated by drinking plenty of water throughout the day.',
                       textAlign: TextAlign.left,
                       style: TextStyle(fontSize: 14),
                     ),
@@ -414,6 +432,22 @@ class MealSummaryPageState extends State<MealSummaryPage> {
     }
 
     return seriesList;
+  }
+
+  Future<double> fetchSuggestedCaloriesLimit() async {
+    // Implement the logic to fetch the suggested calories limit
+    // This is a placeholder for actual implementation
+    final email = widget.email; // Assuming widget.email holds the user's email
+    final url = Uri.parse(
+        'http://localhost:5000/get_suggested_calories?email_id=$email');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['suggested_calories'];
+    } else {
+      throw Exception('Failed to load suggested calories limit');
+    }
   }
 }
 

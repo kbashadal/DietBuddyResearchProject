@@ -543,9 +543,25 @@ def user_meals_by_email_and_type():
 
     # Serialize the results
     output = {}
-    for meal_type, meals in meals_by_type.items():
+    dupl_list = []
+    for meal_type, meals in meals_by_type.items():        
         output[meal_type] = [[meal.food_item.FoodItemName, round(meal.calories,2), meal.volume, meal.weight, meal_type] for meal in meals]
-
+    for key, value in output.items():
+        for val in value:
+            if val[0] not in dupl_list:
+                dupl_list.append(val[0])
+            else:
+                index = dupl_list.index(val[0])
+                output[key][index][1] = output[key][index][1] + val[1]
+    # Remove duplicates from output values
+    for meal_type, meals in output.items():
+        unique_meals = []
+        seen = set()
+        for meal in meals:
+            if meal[0] not in seen:
+                seen.add(meal[0])
+                unique_meals.append(meal)
+        output[meal_type] = unique_meals
     return jsonify(output), 200
 
 
@@ -927,6 +943,19 @@ def get_user_profile():
     }
 
     return jsonify(user_profile), 200   
+
+@app.route('/get_suggested_calories', methods=['GET'])
+def get_suggested_calories():
+    email_id = request.args.get('email_id')
+    if not email_id:
+        return jsonify({'error': 'Missing email_id parameter'}), 400
+
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    return jsonify({'email_id': user.email_id, 'suggested_calories': user.suggested_calories}), 200
+
 
 def insert_unique_categories():
     unique_categories = set()

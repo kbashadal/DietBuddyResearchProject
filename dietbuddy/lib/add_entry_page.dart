@@ -123,6 +123,13 @@ class AddEntryPageState extends State<AddEntryPage> {
             print(predictedImageCaloriesWithFoodItem);
           }
           setState(() {});
+          // ignore: use_build_context_synchronously
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MealOptionsPage(),
+            ),
+          );
         } else {
           // Handle error
           if (kDebugMode) {
