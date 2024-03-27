@@ -6,7 +6,4 @@ Future loadEnv() async {
   // Adjust the path as necessary.
   const envPath = 'assets/.env';
   await dotenv.load(fileName: envPath);
-  print('Env file path: $envPath');
-  print('OPENAI_API_TOKEN: ${dotenv.env['OPENAI_API_TOKEN']}');
-  print('Environment variables loaded successfully');
 }
