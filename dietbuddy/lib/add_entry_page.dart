@@ -24,6 +24,7 @@ class AddEntryPage extends StatefulWidget {
 }
 
 class AddEntryPageState extends State<AddEntryPage> {
+  int _currentIndex = 0;
   String? selectedCategory;
   String? selectedItem;
   List<dynamic> categories = [];
@@ -34,6 +35,7 @@ class AddEntryPageState extends State<AddEntryPage> {
   String?
       per100gramsInput; // Variable to store the per 100 grams input by the user
   int quantity = 1; // Initialize quantity with a default value of 1
+  // ignore: unused_field
   late Future<Map<String, List<MealData>>> _sendDataToAPIFuture;
   Map<String, dynamic>? predictedImageCaloriesWithFoodItem;
 
@@ -101,12 +103,37 @@ class AddEntryPageState extends State<AddEntryPage> {
       final XFile? image = await picker.pickImage(source: source);
       // Handle the picked image
       if (image != null) {
+        // ignore: use_build_context_synchronously
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return const Dialog(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 20),
+                    Text("Processing image..."),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+
         // Prepare for file upload
+        final userEmail =
+            // ignore: use_build_context_synchronously
+            Provider.of<UserProvider>(context, listen: false).email;
         var request = http.MultipartRequest(
-            'POST', Uri.parse('http://127.0.0.1:5000/predictFromImage'));
+            'POST',
+            Uri.parse(
+                'http://127.0.0.1:5000/predictFromImage?userEmail=$userEmail&mealType=$mealType'));
         request.files
             .add(await http.MultipartFile.fromPath('image', image.path));
-
         // Send the request
         var response = await request.send();
 
@@ -123,6 +150,8 @@ class AddEntryPageState extends State<AddEntryPage> {
           }
           setState(() {});
           // ignore: use_build_context_synchronously
+          Navigator.pop(context); // Close the processing dialog
+          // ignore: use_build_context_synchronously
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -131,6 +160,8 @@ class AddEntryPageState extends State<AddEntryPage> {
           );
         } else {
           // Handle error
+          // ignore: use_build_context_synchronously
+          Navigator.pop(context); // Close the processing dialog
           if (kDebugMode) {
             print('Failed to upload image and get response');
           }
@@ -219,8 +250,8 @@ class AddEntryPageState extends State<AddEntryPage> {
 
       final double dailyCalorieLimit = await fetchSuggestedCaloriesLimit();
 
-      // if (totalCalories > dailyCalorieLimit) {
-      if (totalCalories > 20) {
+      if (totalCalories > dailyCalorieLimit) {
+        // if (totalCalories > 20) {
         await showInterventionDialog();
         if (kDebugMode) {
           print(
@@ -594,7 +625,8 @@ class AddEntryPageState extends State<AddEntryPage> {
   Future<void> _addManualEntry() async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // User must tap button to close the dialog
+      barrierDismissible:
+          true, // Allow dialog to be dismissible for a more user-friendly experience
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
@@ -608,37 +640,80 @@ class AddEntryPageState extends State<AddEntryPage> {
             ];
 
             return AlertDialog(
-              title: const Text('Add Entry'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                    20), // Rounded corners for a softer look
+              ),
+              title: Text(
+                'Add Entry',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue[800], // Use theme color for consistency
+                ),
+              ),
               content: SingleChildScrollView(
                 child: ListBody(
                   children: <Widget>[
-                    const Text('You can add a new entry manually.'),
-                    Text('Meal Type: $mealType',
-                        style: const TextStyle(
-                            fontSize: 20)), // Display the meal type
-
-                    DropdownButton<String>(
-                      hint: const Text('Select Category'),
-                      value: selectedCategory,
-                      onChanged: (String? newValue) async {
-                        selectedItem = null; // Reset item selection
-                        await fetchItems(
-                            newValue!); // Fetch items for the selected category
-                        setState(() {
-                          selectedCategory = newValue;
-                        });
-                      },
-                      items: categories
-                          .map<DropdownMenuItem<String>>((dynamic category) {
-                        return DropdownMenuItem<String>(
-                          value: category['name'],
-                          child: Text(category['name']),
-                        );
-                      }).toList(),
+                    Text(
+                      'You can add a new entry manually.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[
+                            600], // Soften the text color for a more elegant look
+                      ),
                     ),
+                    const SizedBox(
+                        height: 20), // Add space for better readability
+                    Text(
+                      'Meal Type: $mealType',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.blue[700], // Theme color for emphasis
+                      ),
+                    ),
+                    const SizedBox(height: 10), // Space before dropdown
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4), // Added padding to prevent overflow
+                      child: DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Select Category',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                                10), // Rounded corners for input
+                          ),
+                        ),
+                        value: selectedCategory,
+                        isExpanded: true, // Set to true to prevent overflow
+                        onChanged: (String? newValue) async {
+                          selectedItem = null; // Reset item selection
+                          await fetchItems(
+                              newValue!); // Fetch items for the selected category
+                          setState(() {
+                            selectedCategory = newValue;
+                          });
+                        },
+                        items: categories
+                            .map<DropdownMenuItem<String>>((dynamic category) {
+                          return DropdownMenuItem<String>(
+                            value: category['name'],
+                            child: Text(category['name']),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 10), // Space between dropdowns
                     if (items.isNotEmpty) ...[
-                      DropdownButton<String>(
-                        hint: const Text('Select Item'),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Select Item',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                                10), // Rounded corners for input
+                          ),
+                        ),
                         value: selectedItem,
                         onChanged: (String? newValue) {
                           setState(() {
@@ -654,13 +729,17 @@ class AddEntryPageState extends State<AddEntryPage> {
                         }).toList(),
                       ),
                     ],
+                    const SizedBox(height: 10), // Space before input fields
                     if (selectedItem != null &&
                         volumeAndCaffeineCategories
                             .contains(selectedCategory)) ...[
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Volume (ml)',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                                10), // Rounded corners for input
+                          ),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
@@ -672,10 +751,14 @@ class AddEntryPageState extends State<AddEntryPage> {
                           });
                         },
                       ),
+                      const SizedBox(height: 10), // Space between input fields
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Caffeine (mg)',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                                10), // Rounded corners for input
+                          ),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
@@ -689,9 +772,12 @@ class AddEntryPageState extends State<AddEntryPage> {
                       ),
                     ] else if (selectedItem != null) ...[
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Weight (g)',
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                                10), // Rounded corners for input
+                          ),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
@@ -699,16 +785,20 @@ class AddEntryPageState extends State<AddEntryPage> {
                           per100gramsInput = value;
                           setState(() {
                             per100gramsInput =
-                                value; // Ensure this updates caffeineInput
+                                value; // Ensure this updates per100gramsInput
                           });
                         },
                       ),
                     ],
+                    const SizedBox(
+                        height: 20), // Space before quantity selector
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove),
+                          icon: const Icon(Icons.remove,
+                              color: Colors
+                                  .red), // Color for intuitive decrease action
                           onPressed: () {
                             if (quantity > 1) {
                               setState(() {
@@ -717,9 +807,17 @@ class AddEntryPageState extends State<AddEntryPage> {
                             }
                           },
                         ),
-                        Text('$quantity'),
+                        Text(
+                          '$quantity',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         IconButton(
-                          icon: const Icon(Icons.add),
+                          icon: const Icon(Icons.add,
+                              color: Colors
+                                  .green), // Color for intuitive increase action
                           onPressed: () {
                             setState(() {
                               quantity++;
@@ -733,13 +831,25 @@ class AddEntryPageState extends State<AddEntryPage> {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text('Cancel'),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Colors
+                          .red, // Use a color that indicates a negative action for clarity
+                    ),
+                  ),
                   onPressed: () {
                     Navigator.of(dialogContext).pop(); // Dismiss the dialog
                   },
                 ),
                 TextButton(
-                  child: const Text('Add'),
+                  child: const Text(
+                    'Add',
+                    style: TextStyle(
+                      color: Colors
+                          .green, // Use a color that indicates a positive action for clarity
+                    ),
+                  ),
                   onPressed: () async {
                     final response = await sendDataToAPI();
                     if (!mounted) {
@@ -754,7 +864,7 @@ class AddEntryPageState extends State<AddEntryPage> {
                             builder: (context) => const MealOptionsPage()),
                       );
                       setState(() {
-                        _sendDataToAPIFuture = _userMealsByEmail(mealType!);
+                        // Update the state based on the API response
                       });
                     } else {
                       // Optionally, handle the case where response is null, e.g., show an error message
@@ -773,153 +883,43 @@ class AddEntryPageState extends State<AddEntryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'DietBuddy',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.green, // Adjust the color to match your branding
-          ),
+        backgroundColor: Colors.blue[50], // Changed to a more academic color
+        title: Image.asset(
+          'assets/name.png', // Changed asset name for a more academic look
+          width: 150, // Adjusted size for a more refined look
+          height: 150,
+          fit: BoxFit.contain,
         ),
+        centerTitle: true, // Centered the title for a more balanced look
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Add an Entry Section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: _addManualEntry,
-                    child: const Column(
-                      children: [
-                        Icon(Icons.add),
-                        Text('Manually Add'),
-                      ],
+      body: Center(
+        // Align to center of the screen
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center, // Center content vertically
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.add,
+                      label: 'Manually Add',
+                      onPressed: _addManualEntry,
                     ),
-                  ),
-                  ElevatedButton(
-                    onPressed: _pickImagePredict,
-                    child: const Column(
-                      children: [
-                        Icon(Icons.camera_alt),
-                        Text('Scan Image'),
-                      ],
+                    _buildActionButton(
+                      icon: Icons.camera_alt,
+                      label: 'Scan Image',
+                      onPressed: _pickImagePredict,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            // Trends Section
-            // ... Implement Trends section based on the design
-            // Trainer Tips Section
-            // ... Implement Trainer Tips section based on the design
-            // Awards Section
-            // ... Implement Awards section based on the design
-
-            // Show the table
-            // FutureBuilder<Map<String, List<MealData>>>(
-            //   future:
-            //       _sendDataToAPIFuture, // Ensure this future returns Map<String, List<MealData>>
-            //   builder: (BuildContext context,
-            //       AsyncSnapshot<Map<String, List<MealData>>> snapshot) {
-            //     if (snapshot.connectionState == ConnectionState.done) {
-            //       if (snapshot.hasData) {
-            //         // Define the columns for the DataTable
-            //         List<DataColumn> columns = const [
-            //           DataColumn(label: Text('Name')),
-            //           DataColumn(label: Text('Calories')),
-            //         ];
-
-            //         // Create rows for the DataTable
-            //         List<DataRow> rows = [];
-
-            //         snapshot.data!.forEach((mealType, meals) {
-            //           for (MealData meal in meals) {
-            //             List<DataCell> cells = [
-            //               DataCell(Text(meal.name)),
-            //               DataCell(Text('${meal.calories}')),
-            //             ];
-            //             rows.add(DataRow(cells: cells));
-            //           }
-            //         });
-            //         if (predictedImageCaloriesWithFoodItem != null) {
-            //           predictedImageCaloriesWithFoodItem!.forEach((key, value) {
-            //             List<DataCell> cells = [
-            //               DataCell(Text(key)), // Name of the food item
-            //               DataCell(Text('$value')), // Calories
-            //             ];
-            //             rows.add(DataRow(cells: cells));
-            //           });
-            //         }
-
-            //         return SingleChildScrollView(
-            //           scrollDirection: Axis.horizontal,
-            //           child: DataTable(
-            //             columns: columns,
-            //             rows: rows,
-            //           ),
-            //         );
-            //       } else if (snapshot.hasError) {
-            //         return Text('Error: ${snapshot.error}');
-            //       }
-            //     }
-            //     // By default, show a loading spinner
-            //     return const CircularProgressIndicator();
-            //   },
-            // ),
-          ],
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-            tooltip: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.tips_and_updates),
-            label: 'Interventions',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-            tooltip: 'History',
-          ),
-        ],
-        selectedItemColor: Colors.green,
-        onTap: (index) {
-          // Check the index and navigate accordingly
-          if (index == 2) {
-            // Assuming the User Profile is the third item
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
-            );
-          }
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const InterventionsSummaryPage()),
-            );
-          }
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => MealSummaryPage(
-                        email: Provider.of<UserProvider>(context, listen: false)
-                                .email ??
-                            '',
-                      )),
-            );
-          }
-          // Handle other indices if needed
-        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -929,10 +929,14 @@ class AddEntryPageState extends State<AddEntryPage> {
               return Wrap(
                 children: <Widget>[
                   ListTile(
-                    leading: const Icon(Icons.add),
-                    title: const Text('Add Meal'),
+                    leading:
+                        Icon(Icons.add, color: Theme.of(context).primaryColor),
+                    title: Text('Add Meal',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context); // Close the menu
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -941,16 +945,19 @@ class AddEntryPageState extends State<AddEntryPage> {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.person),
-                    title: const Text('View Profile'),
+                    leading: Icon(Icons.person,
+                        color: Theme.of(context).primaryColor),
+                    title: Text('View Profile',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const UserProfilePage()),
-                      ); // Close the menu
-                      // Navigate to View Profile Page
+                      );
                     },
                   ),
                 ],
@@ -958,9 +965,181 @@ class AddEntryPageState extends State<AddEntryPage> {
             },
           );
         },
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.tips_and_updates),
+            label: 'Interventions',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
+        ],
+        currentIndex: _currentIndex,
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => MealSummaryPage(
+                    email: Provider.of<UserProvider>(context, listen: false)
+                            .email ??
+                        '',
+                  )),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InterventionsSummaryPage()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+        );
+        // Already on the ViewHistoryPage, no need to navigate
+        break;
+    }
+  }
+
+  Widget _buildActionButton(
+      {required IconData icon,
+      required String label,
+      required VoidCallback onPressed}) {
+    return ElevatedButton.icon(
+      icon: Icon(icon, size: 24),
+      label: Text(label),
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.blue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+    );
+  }
+
+  BottomNavigationBar _buildBottomNavigationBar() {
+    return BottomNavigationBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+          backgroundColor: Colors.blue,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.tips_and_updates),
+          label: 'Interventions',
+          backgroundColor: Colors.blue,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.history),
+          label: 'History',
+          backgroundColor: Colors.blue,
+        ),
+      ],
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.white70,
+      backgroundColor: Colors.green,
+      onTap: _onBottomNavigationBarTapped,
+    );
+  }
+
+  void _onBottomNavigationBarTapped(int index) {
+    switch (index) {
+      case 0:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MealSummaryPage(
+              email:
+                  Provider.of<UserProvider>(context, listen: false).email ?? '',
+            ),
+          ),
+        );
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InterventionsSummaryPage()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+        );
+        break;
+    }
+  }
+
+  FloatingActionButton _buildFloatingActionButton() {
+    return FloatingActionButton(
+      onPressed: () => _showModalBottomSheet(),
+      backgroundColor: Colors.green,
+      child: const Icon(Icons.add, color: Colors.white),
+    );
+  }
+
+  void _showModalBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Add Meal'),
+              onTap: () {
+                Navigator.pop(context); // Close the modal bottom sheet
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const MealOptionsPage()),
+                ); // Navigate to the MealOptionsPage
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('View Profile'),
+              onTap: () {
+                Navigator.pop(context); // Close the modal bottom sheet
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const UserProfilePage()),
+                ); // Navigate to the UserProfilePage
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

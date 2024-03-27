@@ -19,6 +19,8 @@ class MealOptionsPage extends StatefulWidget {
 }
 
 class MealOptionsPageState extends State<MealOptionsPage> {
+  int _currentIndex = 0;
+
   Future<Map<String, dynamic>> _fetchTotalCaloriesByEmailAndType(
       String mealType) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -78,31 +80,37 @@ class MealOptionsPageState extends State<MealOptionsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Enhanced UI for a more professional and user-friendly experience
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'DietBuddy',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.green, // Adjust the color to match your branding
-          ),
+        backgroundColor: Colors.blue[50], // Changed to a more academic color
+        title: Image.asset(
+          'assets/name.png', // Changed asset name for a more academic look
+          width: 150, // Adjusted size for a more refined look
+          height: 150,
+          fit: BoxFit.contain,
         ),
+        centerTitle: true, // Centered the title for a more balanced look
       ),
-      body: ListView(
-        children: <Widget>[
-          _buildMealTypeExpansionTile('Breakfast'),
-          _buildMealTypeExpansionTile('Lunch'),
-          _buildMealTypeExpansionTile('Dinner'),
-          _buildMealTypeExpansionTile('Others'),
-        ],
+      body: Container(
+        color: Colors.blue[50], // Added background color
+        child: ListView(
+          padding:
+              const EdgeInsets.all(8.0), // Added padding for better spacing
+          children: <Widget>[
+            _buildMealTypeExpansionTile('Breakfast'),
+            _buildMealTypeExpansionTile('Lunch'),
+            _buildMealTypeExpansionTile('Dinner'),
+            _buildMealTypeExpansionTile('Others'),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
-            tooltip: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.tips_and_updates),
@@ -111,39 +119,12 @@ class MealOptionsPageState extends State<MealOptionsPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'History',
-            tooltip: 'History',
           ),
         ],
-        selectedItemColor: Colors.green,
-        onTap: (index) {
-          // Check the index and navigate accordingly
-          if (index == 2) {
-            // Assuming the User Profile is the third item
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
-            );
-          }
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const InterventionsSummaryPage()),
-            );
-          }
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => MealSummaryPage(
-                        email: Provider.of<UserProvider>(context, listen: false)
-                                .email ??
-                            '',
-                      )),
-            );
-          }
-          // Handle other indices if needed
-        },
+        currentIndex: _currentIndex,
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -153,10 +134,14 @@ class MealOptionsPageState extends State<MealOptionsPage> {
               return Wrap(
                 children: <Widget>[
                   ListTile(
-                    leading: const Icon(Icons.add),
-                    title: const Text('Add Meal'),
+                    leading:
+                        Icon(Icons.add, color: Theme.of(context).primaryColor),
+                    title: Text('Add Meal',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context); // Close the menu
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -165,16 +150,19 @@ class MealOptionsPageState extends State<MealOptionsPage> {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.person),
-                    title: const Text('View Profile'),
+                    leading: Icon(Icons.person,
+                        color: Theme.of(context).primaryColor),
+                    title: Text('View Profile',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const UserProfilePage()),
-                      ); // Close the menu
-                      // Navigate to View Profile Page
+                      );
                     },
                   ),
                 ],
@@ -182,10 +170,44 @@ class MealOptionsPageState extends State<MealOptionsPage> {
             },
           );
         },
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => MealSummaryPage(
+                    email: Provider.of<UserProvider>(context, listen: false)
+                            .email ??
+                        '',
+                  )),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InterventionsSummaryPage()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+        );
+        // Already on the ViewHistoryPage, no need to navigate
+        break;
+    }
   }
 
   Widget _buildMealTypeExpansionTile(String mealType) {

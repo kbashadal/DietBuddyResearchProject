@@ -7,6 +7,7 @@ import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:dietbuddy/view_history_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -201,7 +202,9 @@ class _ChatPageState extends State<ChatPage> {
     final String? userEmail = Provider.of<UserProvider>(context, listen: false)
         .email; // Using email as a unique identifier for the user
     if (userEmail == null) {
-      print("User email is null, cannot save chat history.");
+      if (kDebugMode) {
+        print("User email is null, cannot save chat history.");
+      }
       return;
     }
     Map<String, dynamic> organizedChatDump = {};
@@ -235,7 +238,9 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     if (response.statusCode == 201) {
-      print("Chat history saved successfully.");
+      if (kDebugMode) {
+        print("Chat history saved successfully.");
+      }
       // ignore: use_build_context_synchronously
       showDialog(
         context: context,
@@ -266,7 +271,9 @@ class _ChatPageState extends State<ChatPage> {
       );
       _messages.clear();
     } else {
-      print("Failed to save chat history: ${response.body}");
+      if (kDebugMode) {
+        print("Failed to save chat history: ${response.body}");
+      }
     }
   }
 

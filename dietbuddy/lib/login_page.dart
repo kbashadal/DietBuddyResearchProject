@@ -72,48 +72,50 @@ class LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'DietBuddy',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.green, // Adjust the color to match your branding
-          ),
+        elevation: 0, // Remove shadow for a cleaner look
+        backgroundColor: Colors.transparent, // Make AppBar transparent
+        title: Image.asset(
+          'assets/name.png', // Assuming 'logo.png' is a more professional asset name
+          width: 120, // Slightly reduced for elegance
+          height: 120,
+          fit: BoxFit.contain,
         ),
+        centerTitle: true,
       ),
-      // Remove the AppBar or make it transparent
-      backgroundColor: Colors.white, // Set the background color to white
+      backgroundColor: Colors.blue[50], // Use a clean white background
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 24.0), // Uniform padding
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const SizedBox(height: 60), // Add space before the form fields
+              const SizedBox(
+                  height: 80), // Increased space for a more airy layout
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Email ID',
-                  hintText: 'Enter Email Id',
-                  // Add the border style as per the image
+                  labelText: 'Email',
+                  hintText: 'Enter your email',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
+                    borderRadius:
+                        BorderRadius.circular(8.0), // Softened border radius
                   ),
-                  // Add the prefix icon if needed
+                  prefixIcon: const Icon(Icons.email), // Email icon for clarity
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  // Add the border style as per the image
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  // Add the prefix icon if needed
+                  prefixIcon:
+                      const Icon(Icons.lock), // Password icon for clarity
                 ),
                 obscureText: true,
               ),
@@ -123,24 +125,30 @@ class LoginPageState extends State<LoginPage> {
               //     onPressed: () {
               //       // Forgot password button pressed
               //     },
-              //     child: const Text('Forgot Password?'),
+              //     child: const Text(
+              //       'Forgot Password?',
+              //       style: TextStyle(
+              //           color: Colors
+              //               .deepPurple), // Use theme color for consistency
+              //     ),
               //   ),
               // ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: loginUser,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Colors.green, // Set the button color to green
+                  backgroundColor: Colors.green, // Theme color for consistency
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(30.0), // Rounded corners
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                   padding: const EdgeInsets.symmetric(
-                      vertical: 15.0,
-                      horizontal: 80.0), // Padding inside the button
+                      vertical: 12.0, horizontal: 36.0),
                 ),
-                child: const Text('Login'),
+                child: const Text(
+                  'Login',
+                  style: TextStyle(
+                      fontSize: 18), // Slightly larger text for readability
+                ),
               ),
               const SizedBox(height: 20),
               TextButton(
@@ -149,12 +157,14 @@ class LoginPageState extends State<LoginPage> {
                       context,
                       MaterialPageRoute(
                           builder: (context) => const RegistrationPage()));
-                  // Sign up button pressed
                 },
                 child: const Text(
                   'Don\'t have an account? Sign Up',
                   style: TextStyle(
-                      color: Colors.green), // Set the text color to green
+                    color: Colors.deepPurple, // Use theme color for consistency
+                    decoration:
+                        TextDecoration.underline, // Underline for emphasis
+                  ),
                 ),
               ),
             ],

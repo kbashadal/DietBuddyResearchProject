@@ -21,6 +21,7 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
   late Future<List<dynamic>> _exerciseSuggestions;
   late Future<List<dynamic>> _alternateFoodSuggestions;
   late Future<Map<String, dynamic>> _userChatHistory;
+  int _currentIndex = 1;
 
   @override
   void initState() {
@@ -115,139 +116,178 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
       ),
       body: ListView(
         children: <Widget>[
-          ExpansionTile(
-            title: const Text('Exercise'),
-            leading: const Icon(Icons.fitness_center),
-            children: <Widget>[
-              FutureBuilder<List<dynamic>>(
-                future: _exerciseSuggestions,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    if (snapshot.hasData) {
-                      return ListView.builder(
-                        shrinkWrap: true, // Add this line
-                        physics:
-                            const NeverScrollableScrollPhysics(), // And this one
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          var suggestion = snapshot.data![index];
-                          return ListTile(
-                            title: Text(suggestion['exercise']['workout_type']),
-                            subtitle: Text(
-                                'Suggested on: ${suggestion['suggested_on']}'),
-                            trailing: suggestion['suggested_time'] != null
-                                ? Text(
-                                    'Time: ${suggestion['suggested_time']} minutes')
-                                : null,
-                          );
-                        },
-                      );
-                    } else if (snapshot.hasError) {
-                      return ListTile(
-                        title: Text('Error: ${snapshot.error}'),
-                      );
+          Card(
+            elevation: 4.0,
+            margin: const EdgeInsets.all(8.0),
+            child: ExpansionTile(
+              title: Text('Exercise Recommendations',
+                  style: Theme.of(context).textTheme.titleLarge),
+              leading: Icon(Icons.fitness_center,
+                  color: Theme.of(context).primaryColor),
+              children: <Widget>[
+                FutureBuilder<List<dynamic>>(
+                  future: _exerciseSuggestions,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasData) {
+                        return ListView.separated(
+                          separatorBuilder: (context, index) =>
+                              Divider(color: Colors.grey[300]),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            var suggestion = snapshot.data![index];
+                            return ListTile(
+                              title: Text(
+                                  suggestion['exercise']['workout_type'],
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                  'Suggested on: ${suggestion['suggested_on']}'),
+                              trailing: suggestion['suggested_time'] != null
+                                  ? Chip(
+                                      label: Text(
+                                          '${suggestion['suggested_time']} min',
+                                          style: const TextStyle(
+                                              color: Colors.white)),
+                                      backgroundColor:
+                                          Theme.of(context).primaryColor,
+                                    )
+                                  : null,
+                            );
+                          },
+                        );
+                      } else if (snapshot.hasError) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text('Error: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.red)),
+                        );
+                      }
                     }
-                  }
-                  return const ListTile(
-                    title: CircularProgressIndicator(),
-                  );
-                },
-              ),
-            ],
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          ExpansionTile(
-            title: const Text('Food'),
-            leading: const Icon(Icons.fastfood),
-            children: <Widget>[
-              FutureBuilder<List<dynamic>>(
-                future: _alternateFoodSuggestions,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          var suggestion = snapshot.data![index];
-                          // Accessing the nested map for food item details
-                          var foodItemDetails = suggestion['food_item'];
-                          // Assuming 'name' is always present in the food item details
-                          String foodItemName = foodItemDetails['name'];
-                          // Accessing 'suggested_on' and 'suggested_time' directly from the suggestion map
-                          String suggestedOn = suggestion['suggested_on'];
-                          String suggestedTime = suggestion['suggested_time'];
+          Card(
+            elevation: 4.0,
+            margin: const EdgeInsets.all(8.0),
+            child: ExpansionTile(
+              title: Text('Food Alternatives',
+                  style: Theme.of(context).textTheme.titleLarge),
+              leading:
+                  Icon(Icons.fastfood, color: Theme.of(context).primaryColor),
+              children: <Widget>[
+                FutureBuilder<List<dynamic>>(
+                  future: _alternateFoodSuggestions,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                        return ListView.separated(
+                          separatorBuilder: (context, index) =>
+                              Divider(color: Colors.grey[300]),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            var suggestion = snapshot.data![index];
+                            var foodItemDetails = suggestion['food_item'];
+                            String foodItemName = foodItemDetails['name'];
+                            String suggestedOn = suggestion['suggested_on'];
+                            String suggestedTime = suggestion['suggested_time'];
 
-                          return ListTile(
-                            title: Text(foodItemName),
-                            subtitle: Text(
-                                'Suggested on: $suggestedOn at $suggestedTime'),
-                          );
-                        },
-                      );
-                    } else if (snapshot.hasError) {
-                      return ListTile(
-                        title: Text('Error: ${snapshot.error}'),
-                      );
-                    } else {
-                      return const ListTile(
-                        title: Text('No food alternatives available.'),
-                      );
+                            return ListTile(
+                              title: Text(foodItemName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                  'Suggested on: $suggestedOn at $suggestedTime'),
+                              leading: Icon(Icons.restaurant,
+                                  color: Theme.of(context).primaryColor),
+                            );
+                          },
+                        );
+                      } else if (snapshot.hasError) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text('Error: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.red)),
+                        );
+                      }
                     }
-                  }
-                  return const ListTile(
-                    title: CircularProgressIndicator(),
-                  );
-                },
-              ),
-            ],
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          ExpansionTile(
-            title: const Text('Chat History'),
-            leading: const Icon(Icons.history),
-            children: <Widget>[
-              FutureBuilder<Map<String, dynamic>>(
-                future: _userChatHistory,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          String date = snapshot.data!.keys.elementAt(index);
-                          var chatDetails = snapshot.data![date];
-                          return ListTile(
-                            title: Text('Chat on: $date'),
-                            subtitle: Text('Messages: ${chatDetails.length}'),
-                            onTap: () {
-                              Navigator.push(
+          Card(
+            elevation: 4.0,
+            margin: const EdgeInsets.all(8.0),
+            child: ExpansionTile(
+              title: Text('Chat History',
+                  style: Theme.of(context).textTheme.titleLarge),
+              leading:
+                  Icon(Icons.history, color: Theme.of(context).primaryColor),
+              children: <Widget>[
+                FutureBuilder<Map<String, dynamic>>(
+                  future: _userChatHistory,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                        return ListView.separated(
+                          separatorBuilder: (context, index) =>
+                              Divider(color: Colors.grey[300]),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            String date = snapshot.data!.keys.elementAt(index);
+                            var chatDetails = snapshot.data![date];
+                            return ListTile(
+                              title: Text('Chat on: $date',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              subtitle: Text('Messages: ${chatDetails.length}'),
+                              leading: Icon(Icons.chat,
+                                  color: Theme.of(context).primaryColor),
+                              onTap: () {
+                                Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         ChatPage(messageData: chatDetails),
-                                  ));
-                            },
-                          );
-                        },
-                      );
-                    } else if (snapshot.hasError) {
-                      return ListTile(
-                        title: Text('Error: ${snapshot.error}'),
-                      );
-                    } else {
-                      return const ListTile(
-                        title: Text('No chat history available.'),
-                      );
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      } else if (snapshot.hasError) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text('Error: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.red)),
+                        );
+                      }
                     }
-                  }
-                  return const ListTile(
-                    title: CircularProgressIndicator(),
-                  );
-                },
-              ),
-            ],
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -256,7 +296,6 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
-            tooltip: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.tips_and_updates),
@@ -265,39 +304,12 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'History',
-            tooltip: 'History',
           ),
         ],
-        selectedItemColor: Colors.green,
-        onTap: (index) {
-          // Check the index and navigate accordingly
-          if (index == 2) {
-            // Assuming the User Profile is the third item
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
-            );
-          }
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const InterventionsSummaryPage()),
-            );
-          }
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => MealSummaryPage(
-                        email: Provider.of<UserProvider>(context, listen: false)
-                                .email ??
-                            '',
-                      )),
-            );
-          }
-          // Handle other indices if needed
-        },
+        currentIndex: _currentIndex,
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -307,10 +319,14 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
               return Wrap(
                 children: <Widget>[
                   ListTile(
-                    leading: const Icon(Icons.add),
-                    title: const Text('Add Meal'),
+                    leading:
+                        Icon(Icons.add, color: Theme.of(context).primaryColor),
+                    title: Text('Add Meal',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context); // Close the menu
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -319,16 +335,19 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.person),
-                    title: const Text('View Profile'),
+                    leading: Icon(Icons.person,
+                        color: Theme.of(context).primaryColor),
+                    title: Text('View Profile',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const UserProfilePage()),
-                      ); // Close the menu
-                      // Navigate to View Profile Page
+                      );
                     },
                   ),
                 ],
@@ -336,9 +355,74 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
             },
           );
         },
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => MealSummaryPage(
+                    email: Provider.of<UserProvider>(context, listen: false)
+                            .email ??
+                        '',
+                  )),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InterventionsSummaryPage()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+        );
+        // Already on the ViewHistoryPage, no need to navigate
+        break;
+    }
+  }
+
+  void _showActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: <Widget>[
+            ListTile(
+              leading: Icon(Icons.add, color: Theme.of(context).primaryColor),
+              title: const Text('Add Meal', style: TextStyle(fontSize: 16)),
+              onTap: () => _navigateTo(context, const MealOptionsPage()),
+            ),
+            ListTile(
+              leading:
+                  Icon(Icons.person, color: Theme.of(context).primaryColor),
+              title: const Text('View Profile', style: TextStyle(fontSize: 16)),
+              onTap: () => _navigateTo(context, const UserProfilePage()),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateTo(BuildContext context, Widget page) {
+    Navigator.pop(context); // Close the bottom sheet
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => page),
     );
   }
 }

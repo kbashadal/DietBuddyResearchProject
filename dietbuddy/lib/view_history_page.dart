@@ -17,6 +17,7 @@ class ViewHistoryPage extends StatefulWidget {
 }
 
 class ViewHistoryPageState extends State<ViewHistoryPage> {
+  int _currentIndex = 2;
   DateTime? _selectedDate;
   List<MealCaloriesData> _caloriesData = [];
   @override
@@ -71,44 +72,54 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'DietBuddy',
-          style: TextStyle(
-            fontSize: 24, // Adjusted for better proportionality
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context)
-                .primaryColor, // Use theme color for consistency
-          ),
+        backgroundColor: Colors.blue[50], // Added background color
+        title: Image.asset(
+          'assets/name.png',
+          width: 200,
+          height: 200,
+          fit: BoxFit.contain,
         ),
-        backgroundColor: Colors.white, // Set a neutral color for the AppBar
-        elevation: 0, // Remove shadow for a modern look
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0), // Add padding for better spacing
+        padding:
+            const EdgeInsets.all(16.0), // Enhanced padding for better spacing
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.start, // Adjust alignment for natural flow
+          mainAxisAlignment: MainAxisAlignment.start, // Maintain natural flow
+          crossAxisAlignment:
+              CrossAxisAlignment.start, // Align items to the start
           children: <Widget>[
             ElevatedButton(
               onPressed: () => _selectDate(context),
               style: ElevatedButton.styleFrom(
-                // backgroundColor: Theme.of(context)
-                //     .colorScheme
-                //     .onSurface, // Use theme color for consistency
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.greenAccent[400], // Text color
+                elevation: 4, // Shadow depth
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                      8), // Rounded corners for a modern look
+                  borderRadius:
+                      BorderRadius.circular(12), // Smooth rounded corners
                 ),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 30, vertical: 15), // Padding inside the button
               ),
-              child: const Text('Select Date'),
+              child: const Text(
+                'Select Date',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold), // Bolder and larger text
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(
+                height: 24), // Increased spacing for visual separation
             if (_selectedDate != null)
               Text(
                 'Selected Date: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
                 style: const TextStyle(
-                    fontSize: 16), // Adjust font size for readability
+                  fontSize: 20, // Larger font size for better readability
+                  fontWeight: FontWeight.bold, // Bold font for emphasis
+                  color: Colors.deepPurple, // Color for visual appeal
+                ),
               ),
+            const SizedBox(height: 24), // Additional spacing before the chart
             Expanded(
               child: _createBarChart(),
             ),
@@ -130,41 +141,10 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
             label: 'History',
           ),
         ],
-        selectedItemColor:
-            Theme.of(context).primaryColor, // Use theme color for consistency
-        unselectedItemColor:
-            Colors.grey, // Use a neutral color for unselected items
-        onTap: (index) {
-          // Navigation logic
-          switch (index) {
-            case 0:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => MealSummaryPage(
-                          email:
-                              Provider.of<UserProvider>(context, listen: false)
-                                      .email ??
-                                  '',
-                        )),
-              );
-              break;
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const InterventionsSummaryPage()),
-              );
-              break;
-            case 2:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const ViewHistoryPage()),
-              );
-              break;
-          }
-        },
+        currentIndex: _currentIndex,
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -176,9 +156,12 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
                   ListTile(
                     leading:
                         Icon(Icons.add, color: Theme.of(context).primaryColor),
-                    title: const Text('Add Meal'),
+                    title: Text('Add Meal',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context); // Close the menu
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -189,15 +172,17 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
                   ListTile(
                     leading: Icon(Icons.person,
                         color: Theme.of(context).primaryColor),
-                    title: const Text('View Profile'),
+                    title: Text('View Profile',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const UserProfilePage()),
-                      ); // Close the menu
-                      // Navigate to View Profile Page
+                      );
                     },
                   ),
                 ],
@@ -205,12 +190,52 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
             },
           );
         },
-        backgroundColor: Theme.of(context)
-            .colorScheme
-            .secondary, // Use theme color for consistency
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => MealSummaryPage(
+                    email: Provider.of<UserProvider>(context, listen: false)
+                            .email ??
+                        '',
+                  )),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InterventionsSummaryPage()),
+        );
+        break;
+      case 2:
+        // Already on the ViewHistoryPage, no need to navigate
+        break;
+    }
+  }
+
+  Future<double> fetchSuggestedCaloriesLimit() async {
+    final profileUrl = Uri.parse(
+        'http://localhost:5000/user_profile?email_id=${Provider.of<UserProvider>(context, listen: false).email}');
+    final profileResponse = await http.get(profileUrl);
+    if (profileResponse.statusCode == 200) {
+      final profileData = json.decode(profileResponse.body);
+      return profileData['suggested_calories'];
+    } else {
+      throw Exception('Failed to load suggested calories limit');
+    }
   }
 
   Widget _createBarChart() {
@@ -230,21 +255,88 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text('Total Calories: $totalCalories',
-              style: const TextStyle(fontSize: 18)),
+        FutureBuilder<double>(
+          future: fetchSuggestedCaloriesLimit(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+                child: Text(
+                  'Total Calories: $totalCalories / ${snapshot.data}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepOrange,
+                  ),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+                child: Text(
+                  'Total Calories: $totalCalories / Suggested Limit: Error fetching limit',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepOrange,
+                  ),
+                ),
+              );
+            }
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+              child: Text(
+                'Total Calories: $totalCalories / Suggested Limit: Loading...',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepOrange,
+                ),
+              ),
+            );
+          },
         ),
-        SizedBox(
-          height: MediaQuery.of(context).size.height *
-              0.33, // Adjust the height to 33% of the screen height
-          child: charts.BarChart(
-            series,
-            animate: true,
-            vertical: false,
-            barRendererDecorator: charts.BarLabelDecorator<String>(),
-            domainAxis: const charts.OrdinalAxisSpec(),
-            // Removed the legend configuration
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: charts.BarChart(
+              series,
+              animate: true,
+              vertical: false, // Use a horizontal bar chart
+              barRendererDecorator: charts.BarLabelDecorator<String>(
+                labelPosition: charts.BarLabelPosition.auto,
+              ),
+              // Adjust the domain axis to be the "vertical" axis visually
+              domainAxis: const charts.OrdinalAxisSpec(
+                renderSpec: charts.SmallTickRendererSpec(
+                  labelStyle: charts.TextStyleSpec(
+                    fontSize: 14,
+                    color: charts.MaterialPalette.black,
+                  ),
+                ),
+              ),
+              // Optionally adjust the measure axis to improve the layout
+              primaryMeasureAxis: const charts.NumericAxisSpec(
+                renderSpec: charts.GridlineRendererSpec(
+                  labelStyle: charts.TextStyleSpec(
+                    fontSize: 14,
+                    color: charts.MaterialPalette.black,
+                  ),
+                ),
+              ),
+              behaviors: [
+                charts.ChartTitle(
+                  'Calories by Meal Type',
+                  behaviorPosition: charts.BehaviorPosition.top,
+                  titleOutsideJustification: charts.OutsideJustification.start,
+                  innerPadding: 18,
+                  titleStyleSpec: const charts.TextStyleSpec(fontSize: 18),
+                ),
+              ],
+            ),
           ),
         ),
       ],

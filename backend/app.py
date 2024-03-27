@@ -886,6 +886,8 @@ def total_calories_by_email_and_date_simple():
 
 @app.route('/predictFromImage', methods=['POST'])
 def predictFromImage():
+    email_id = request.args.get('userEmail')
+    meal_type = request.args.get('mealType')
     if 'image' not in request.files:
         return jsonify({'error': 'No image part'}), 400
     file = request.files['image']
@@ -918,14 +920,14 @@ def predictFromImage():
         nutritional_info_resp_jasn = nutritional_info_resp.json()
         caloires_predicted = {}
         caloires_predicted[nutritional_info_resp_jasn['foodName'][0]] = round(nutritional_info_resp_jasn["nutritional_info"]["calories"],2)
-        save_to_db(caloires_predicted)
+        save_to_db(caloires_predicted,email_id,meal_type)
         os.remove(file_path)
         return jsonify(caloires_predicted)
     
-def save_to_db(caloires_predicted):
+def save_to_db(caloires_predicted,email_id,meal_type):
     category = "ImageUpload"
-    meal_type = "Breakfast"
-    email = "sujahidms@gmail.com"
+    meal_type = meal_type
+    email = email_id
     date = datetime.datetime.now().strftime('%Y-%m-%d')
     time = datetime.datetime.now().strftime('%H:%M:%S')
     weight = "0"

@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_options_page.dart';
 import 'package:dietbuddy/user_profile_page.dart';
+import 'package:dietbuddy/user_provider.dart';
 import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:provider/provider.dart';
 
 class MealSummaryPage extends StatefulWidget {
   final String email;
@@ -20,6 +22,7 @@ class MealSummaryPage extends StatefulWidget {
 
 class MealSummaryPageState extends State<MealSummaryPage> {
   late Map<String, double> _mealData = {};
+  int _currentIndex = 0;
   String _userName = ''; // Add a variable to store the user's name
 
   @override
@@ -87,280 +90,124 @@ class MealSummaryPageState extends State<MealSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'DietBuddy',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.green, // Adjust the color to match your branding
-          ),
+        backgroundColor: Colors.white, // Changed to a more academic color
+        title: Image.asset(
+          'assets/name.png', // Changed asset name for a more academic look
+          width: 150, // Adjusted size for a more refined look
+          height: 150,
+          fit: BoxFit.contain,
         ),
+        centerTitle: true, // Centered the title for a more balanced look
       ),
-      body: Stack(
-        children: [
-          Column(
+      body: SingleChildScrollView(
+        // Enhanced scroll view for adaptability across various screen sizes
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: [
+                Colors.white, // Lighter shade for the top
+                Colors.white, // Slightly darker shade towards the bottom
+              ],
+            ),
+          ), // Utilizing a gradient for a more elegant background
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment
+                .start, // Align content to the start for a clean look
             children: [
               Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Today: ${DateTime.now().toLocal().toString().split(' ')[0]}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black,
-                    ),
-                  ),
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Today: ${DateTime.now().toLocal().toString().split(' ')[0]}',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.blueGrey[900],
+                    fontWeight: FontWeight.bold,
+                  ), // Enhanced text style for a more professional appearance
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Align(
-                  alignment: Alignment.centerLeft, // Align text to the left
-                  child: InkWell(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const UserProfilePage()),
+                    );
+                  },
+                  child: Text(
+                    'Welcome, $_userName',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.deepPurple[400],
+                      fontWeight: FontWeight.bold,
+                    ), // Upgraded text style for welcoming message
+                  ),
+                ),
+              ),
+              _buildActivitySection(context,
+                  theme), // Modularized sections for improved code readability
+              _buildDietTipsSection(theme),
+              _buildAwardsSection(theme),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) {
+              return Wrap(
+                children: <Widget>[
+                  ListTile(
+                    leading:
+                        Icon(Icons.add, color: Theme.of(context).primaryColor),
+                    title: Text('Add Meal',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
                     onTap: () {
+                      Navigator.pop(context); // Close the modal
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MealOptionsPage()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.person,
+                        color: Theme.of(context).primaryColor),
+                    title: Text('View Profile',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
+                    onTap: () {
+                      Navigator.pop(context); // Close the modal
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const UserProfilePage()),
                       );
                     },
-                    child: RichText(
-                      text: TextSpan(
-                        text:
-                            'Welcome $_userName', // Use the _userName variable
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              ExpansionTile(
-                initiallyExpanded: true,
-                leading: const Icon(Icons.trending_up, color: Colors.red),
-                title: const Text('Activity',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                children: <Widget>[
-                  FutureBuilder<double>(
-                    future:
-                        fetchSuggestedCaloriesLimit(), // Assuming this function is defined and returns Future<double>
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        return ListTile(
-                          title: Text(
-                            'Total Calories: ${getTotalCalories().toStringAsFixed(2)} / ${snapshot.data}',
-                            textAlign: TextAlign.left,
-                            style: const TextStyle(fontSize: 10),
-                          ),
-                        );
-                      } else if (snapshot.hasError) {
-                        return const ListTile(
-                          title: Text(
-                            'Error fetching suggested calories',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 10),
-                          ),
-                        );
-                      }
-                      // By default, show a loading spinner.
-                      return const Center(child: CircularProgressIndicator());
-                    },
-                  ),
-                  _mealData.isNotEmpty
-                      ? SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.2,
-                          child: charts.BarChart(
-                            _createChartData(),
-                            animate: true,
-                            vertical: false,
-                            barGroupingType: charts.BarGroupingType.grouped,
-                            behaviors: [
-                              // charts.ChartTitle('',
-                              //     behaviorPosition:
-                              //         charts.BehaviorPosition.start,
-                              //     titleOutsideJustification: charts
-                              //         .OutsideJustification.middleDrawArea),
-                              charts.SeriesLegend(
-                                position: charts.BehaviorPosition.top,
-                                horizontalFirst: false,
-                                cellPadding: const EdgeInsets.only(
-                                    right: 4.0, bottom: 4.0),
-                                showMeasures: true,
-                                legendDefaultMeasure:
-                                    charts.LegendDefaultMeasure.lastValue,
-                                entryTextStyle: charts.TextStyleSpec(
-                                    color: charts
-                                        .MaterialPalette.gray.shadeDefault,
-                                    fontFamily: 'Georgia',
-                                    fontSize: 9),
-                              ),
-                            ],
-                          ),
-                        )
-                      : const Center(child: CircularProgressIndicator()),
-                ],
-              ),
-              const ExpansionTile(
-                leading: Icon(Icons.local_dining, color: Colors.green),
-                title: Text('Diet Tips',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                children: <Widget>[
-                  ListTile(
-                    title: Text(
-                      'Eat a variety of foods to ensure a balanced diet.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Ensure your diet is rich in fruits and vegetables for essential vitamins and minerals.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Limit intake of sugars and saturated fats for better health outcomes.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Stay hydrated by drinking plenty of water throughout the day.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
                   ),
                 ],
-              ),
-              const ExpansionTile(
-                leading: Icon(Icons.star, color: Colors.amber),
-                title: Text('Awards',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                children: <Widget>[
-                  ListTile(
-                    title: Text(
-                      'Consistency Master - For logging meals 30 days in a row.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Balanced Diet Achiever - For maintaining a balanced diet for a week.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Hydration Hero - For meeting water intake goals 7 days in a row.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Fitness Fanatic - For completing all workout goals in a month.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Wrap(
-                      children: <Widget>[
-                        ListTile(
-                          leading: const Icon(Icons.add),
-                          title: const Text('Add Meal'),
-                          onTap: () {
-                            Navigator.pop(context); // Close the menu
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const MealOptionsPage()),
-                            );
-                          },
-                        ),
-                        // ListTile(
-                        //   leading: const Icon(Icons.history),
-                        //   title: const Text('View History'),
-                        //   onTap: () {
-                        //     Navigator.pop(context);
-                        //     Navigator.push(
-                        //       context,
-                        //       MaterialPageRoute(
-                        //           builder: (context) =>
-                        //               const ViewHistoryPage()),
-                        //     ); // Close the menu
-                        //     // Navigate to View History Page
-                        //   },
-                        // ),
-                        ListTile(
-                          leading: const Icon(Icons.person),
-                          title: const Text('View Profile'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const UserProfilePage()),
-                            ); // Close the menu
-                            // Navigate to View History Page
-                          },
-                        ),
-                        // ListTile(
-                        //   leading: const Icon(Icons.settings_suggest_rounded),
-                        //   title: const Text('View Interventions'),
-                        //   onTap: () {
-                        //     Navigator.pop(context);
-                        //     Navigator.push(
-                        //       context,
-                        //       MaterialPageRoute(
-                        //           builder: (context) =>
-                        //               const InterventionsSummaryPage()),
-                        //     ); // Close the menu
-                        //     // Navigate to View History Page
-                        //   },
-                        // ),
-                      ],
-                    );
-                  },
-                );
-              },
-              backgroundColor: Colors.blue,
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-          ),
-        ],
+              );
+            },
+          );
+        },
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
-            tooltip: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.tips_and_updates),
@@ -369,69 +216,287 @@ class MealSummaryPageState extends State<MealSummaryPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'History',
-            tooltip: 'History',
           ),
         ],
-        selectedItemColor: Colors.green,
-        onTap: (index) {
-          // Check the index and navigate accordingly
-          if (index == 2) {
-            // Assuming the User Profile is the third item
-            Navigator.push(
+        currentIndex: _currentIndex,
+        selectedItemColor: Theme.of(context).colorScheme.secondary,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => MealSummaryPage(
+                    email: Provider.of<UserProvider>(context, listen: false)
+                            .email ??
+                        '',
+                  )),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InterventionsSummaryPage()),
+        );
+        break;
+      case 2:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+        );
+        // Already on the ViewHistoryPage, no need to navigate
+        break;
+    }
+  }
+
+  Widget _buildActivitySection(BuildContext context, ThemeData theme) {
+    return ExpansionTile(
+      initiallyExpanded: true,
+      leading: Icon(Icons.trending_up, color: theme.primaryColor),
+      title: Text('Activity', style: theme.textTheme.titleMedium),
+      children: <Widget>[
+        FutureBuilder<double>(
+          future: fetchSuggestedCaloriesLimit(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return ListTile(
+                title: Text(
+                  'Total Calories: ${getTotalCalories().toStringAsFixed(2)} / ${snapshot.data}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return ListTile(
+                title: Text(
+                  'Error fetching suggested calories',
+                  style:
+                      theme.textTheme.bodyMedium?.copyWith(color: Colors.red),
+                ),
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
+        _mealData.isNotEmpty
+            ? _buildBarChart(context)
+            : const Center(child: CircularProgressIndicator()),
+      ],
+    );
+  }
+
+  Widget _buildDietTipsSection(ThemeData theme) {
+    return ExpansionTile(
+      leading: Icon(Icons.local_dining, color: theme.primaryColor),
+      title: Text('Diet Tips', style: theme.textTheme.titleMedium),
+      children: <Widget>[
+        ListTile(
+          title: Text(
+            'Eat a variety of foods to ensure a balanced diet.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        ListTile(
+          title: Text(
+            'Ensure your diet is rich in fruits and vegetables for essential vitamins and minerals.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        ListTile(
+          title: Text(
+            'Limit intake of sugars and saturated fats for better health outcomes.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        ListTile(
+          title: Text(
+            'Stay hydrated by drinking plenty of water throughout the day.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAwardsSection(ThemeData theme) {
+    return ExpansionTile(
+      leading: Icon(Icons.star, color: theme.primaryColor),
+      title: Text('Awards', style: theme.textTheme.titleMedium),
+      children: <Widget>[
+        ListTile(
+          title: Text(
+            'Consistency Master - For logging meals 30 days in a row.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        ListTile(
+          title: Text(
+            'Balanced Diet Achiever - For maintaining a balanced diet for a week.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        ListTile(
+          title: Text(
+            'Hydration Hero - For meeting water intake goals 7 days in a row.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        ListTile(
+          title: Text(
+            'Fitness Fanatic - For completing all workout goals in a month.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showAddMealModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Add Meal'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const MealOptionsPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('View Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const UserProfilePage()),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    return BottomNavigationBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Home',
+          backgroundColor: Colors.green,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.tips_and_updates),
+          label: 'Interventions',
+          backgroundColor: Colors.green,
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.history),
+          label: 'History',
+          backgroundColor: Colors.green,
+        ),
+      ],
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.white70,
+      backgroundColor: Colors.green,
+      onTap: (index) {
+        switch (index) {
+          case 0:
+            Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
+              MaterialPageRoute(
+                  builder: (context) => MealSummaryPage(email: widget.email)),
+              (Route<dynamic> route) => false,
             );
-          }
-          if (index == 1) {
+            break;
+          case 1:
             Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (context) => const InterventionsSummaryPage()),
             );
-          }
-          if (index == 0) {
+            break;
+          case 2:
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => MealSummaryPage(
-                        email: widget.email,
-                      )),
+              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
             );
-          }
-          // Handle other indices if needed
-        },
+            break;
+          default:
+            break;
+        }
+      },
+      type: BottomNavigationBarType.shifting, // Adds animation on tap
+      currentIndex: 0, // Set the current index to highlight the current page
+    );
+  }
+
+  Widget _buildBarChart(BuildContext context) {
+    // Convert _mealData into a list of Series for the chart
+    List<charts.Series<MealCalories, String>> seriesList = _createChartData();
+
+    return Container(
+      height: 200, // Set a fixed height for the chart container
+      padding: const EdgeInsets.all(10),
+      child: charts.BarChart(
+        seriesList,
+        animate: true, // Adds animation to the chart
+        // Configure the axis to use string values
+        domainAxis: new charts.OrdinalAxisSpec(),
+        // Configure bar renderer with corner radius
+        defaultRenderer: new charts.BarRendererConfig(
+            cornerStrategy: const charts.ConstCornerStrategy(30)),
+        behaviors: [
+          // Add a chart title
+          charts.ChartTitle('Calories by Meal Type',
+              behaviorPosition: charts.BehaviorPosition.top,
+              titleOutsideJustification: charts.OutsideJustification.start,
+              innerPadding: 18),
+          // Add legends
+          charts.SeriesLegend(
+            position: charts.BehaviorPosition.bottom,
+            horizontalFirst: false,
+            cellPadding: EdgeInsets.only(right: 4.0, bottom: 4.0),
+          )
+        ],
       ),
     );
   }
 
-  List<charts.Series<MealData, String>> _createChartData() {
-    final List<MealData> dataList = _mealData.entries
-        .map((entry) => MealData(entry.key, entry.value, 0, 0, entry.key))
+  List<charts.Series<MealCalories, String>> _createChartData() {
+    List<MealCalories> data = _mealData.entries
+        .map((entry) => MealCalories(entry.key, entry.value))
         .toList();
 
-    List<charts.Series<MealData, String>> seriesList = [];
-
-    var colors = [
-      charts.MaterialPalette.blue.shadeDefault,
-      charts.MaterialPalette.red.shadeDefault,
-      charts.MaterialPalette.green.shadeDefault,
-      charts.MaterialPalette.yellow.shadeDefault,
-      charts.MaterialPalette.purple.shadeDefault,
-      // Add more colors as needed
+    return [
+      charts.Series<MealCalories, String>(
+        id: 'Calories',
+        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
+        domainFn: (MealCalories calories, _) => calories.mealType,
+        measureFn: (MealCalories calories, _) => calories.calories,
+        data: data,
+      )
     ];
-
-    for (int i = 0; i < dataList.length; i++) {
-      var mealData = dataList[i];
-      seriesList.add(charts.Series<MealData, String>(
-        id: mealData.mealType,
-        domainFn: (MealData meals, _) => meals.mealType,
-        measureFn: (MealData meals, _) => meals.calories,
-        data: [mealData],
-        colorFn: (_, __) => colors[i % colors.length],
-      ));
-    }
-
-    return seriesList;
   }
 
   Future<double> fetchSuggestedCaloriesLimit() async {
@@ -459,4 +524,11 @@ class MealData {
   final String mealType;
 
   MealData(this.name, this.calories, this.caffeine, this.volume, this.mealType);
+}
+
+class MealCalories {
+  final String mealType;
+  final double calories;
+
+  MealCalories(this.mealType, this.calories);
 }
