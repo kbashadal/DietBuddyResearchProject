@@ -43,6 +43,7 @@ dependencies:
   intl: ^0.17.0
   chat_gpt_sdk: ^3.0.3
   dash_chat_2: ^0.0.15
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
