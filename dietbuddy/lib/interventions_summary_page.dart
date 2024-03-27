@@ -1,3 +1,5 @@
+import 'package:dietbuddy/chat_history.dart';
+import 'package:dietbuddy/diet_chat_bot_page.dart';
 import 'package:dietbuddy/meal_options_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/user_profile_page.dart';
@@ -19,12 +21,16 @@ class InterventionsSummaryPage extends StatefulWidget {
 class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
   late Future<List<dynamic>> _exerciseSuggestions;
   late Future<List<dynamic>> _alternateFoodSuggestions;
+  late Future<Map<String, dynamic>> _userChatHistory;
 
   @override
   void initState() {
     super.initState();
     _exerciseSuggestions = fetchExerciseSuggestions(context);
     _alternateFoodSuggestions = fetchAlternateFoodSuggestions(context);
+    _userChatHistory = Future.value({});
+
+    _userChatHistory = fetchUserChatHistory(context);
   }
 
   Future<List<dynamic>> fetchAlternateFoodSuggestions(
@@ -69,6 +75,29 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to load exercise suggestions');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchUserChatHistory(
+      BuildContext context) async {
+    // Obtain the user's email from UserProvider
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.email;
+
+    // Ensure userEmail is not null or handle it appropriately
+    if (userEmail == null) {
+      throw Exception('User email is not available');
+    }
+
+    final response = await http.get(
+      Uri.parse(
+          'http://localhost:5000/get_user_chat_history?emailId=$userEmail'),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load user chat history');
     }
   }
 
@@ -175,13 +204,48 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
             ],
           ),
           ExpansionTile(
-            title: const Text('Chat'),
-            leading: const Icon(Icons.chat),
+            title: const Text('Chat History'),
+            leading: const Icon(Icons.history),
             children: <Widget>[
-              ListTile(
-                title: const Text('Chat with DietBot'),
-                onTap: () {
-                  // Navigate to Chat with DietBot Page
+              FutureBuilder<Map<String, dynamic>>(
+                future: _userChatHistory,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          String date = snapshot.data!.keys.elementAt(index);
+                          var chatDetails = snapshot.data![date];
+                          return ListTile(
+                            title: Text('Chat on: $date'),
+                            subtitle: Text('Messages: ${chatDetails.length}'),
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ChatPage(messageData: chatDetails),
+                                  ));
+                            },
+                          );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return ListTile(
+                        title: Text('Error: ${snapshot.error}'),
+                      );
+                    } else {
+                      return const ListTile(
+                        title: Text('No chat history available.'),
+                      );
+                    }
+                  }
+                  return const ListTile(
+                    title: CircularProgressIndicator(),
+                  );
                 },
               ),
             ],

@@ -130,7 +130,8 @@ class LoginPageState extends State<LoginPage> {
               ElevatedButton(
                 onPressed: loginUser,
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.green, // Set the button color to green
+                  backgroundColor:
+                      Colors.green, // Set the button color to green
                   shape: RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(30.0), // Rounded corners

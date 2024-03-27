@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:ffi';
-
+import 'package:dietbuddy/diet_chat_bot_page.dart';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_options_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
@@ -220,7 +219,8 @@ class AddEntryPageState extends State<AddEntryPage> {
 
       final double dailyCalorieLimit = await fetchSuggestedCaloriesLimit();
 
-      if (totalCalories > dailyCalorieLimit) {
+      // if (totalCalories > dailyCalorieLimit) {
+      if (totalCalories > 20) {
         await showInterventionDialog();
         if (kDebugMode) {
           print(
@@ -544,6 +544,13 @@ class AddEntryPageState extends State<AddEntryPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ChatPage(
+                                messageData: null,
+                              )),
+                    );
                     // Implement opening Chat Bot
                   },
                   child: const Text("Chat with DietBot"),

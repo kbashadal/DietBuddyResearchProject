@@ -1,4 +1,5 @@
 import datetime
+import json
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
@@ -136,7 +137,76 @@ class User(db.Model):
 
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
+   
+   
+class UserChatHistory(db.Model):
+    __tablename__ = 'user_chat_history'
+    id = db.Column(db.Integer, primary_key=True)
+    email_id = db.Column(db.String(120), db.ForeignKey('user.email_id'), nullable=False)
+    chat_dump = db.Column(db.JSON, nullable=False)
+    date = db.Column(db.Date, nullable=False, default=datetime.date.today())
+
+    # Relationships
+    user = db.relationship('User', backref=db.backref('chat_histories', lazy=True))
+
+    def __repr__(self):
+        return f'<UserChatHistory {self.email_id}>'
+@app.route('/save_user_chat_history', methods=['POST'])
+def save_user_chat_history():
+    data = request.json
+    email_id = data.get('emailId')
+    chat_dump = data.get('chatDump')
+    try:
+        chat_dump_json = json.loads(chat_dump)
+        saved_date = list(chat_dump_json.keys())[0]
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Invalid chatDump format. Expected JSON.'}), 400
     
+
+    # Find user by email
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'error': 'User not found.'}), 404
+
+    # Create a new UserChatHistory instance
+    new_chat_history = UserChatHistory(
+        email_id=email_id,
+        chat_dump=chat_dump_json,
+    )
+
+    # Add to the session and commit
+    try:
+        db.session.add(new_chat_history)
+        db.session.commit()
+        return jsonify({'message': 'Chat history saved successfully.'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_user_chat_history', methods=['GET'])
+def get_user_chat_history():
+    email_id = request.args.get('emailId')
+    if not email_id:
+        return jsonify({'error': 'Missing emailId parameter'}), 400
+
+    # Find user by email
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Fetch UserChatHistory for the user
+    chat_histories = UserChatHistory.query.filter_by(email_id=email_id).all()
+
+    if not chat_histories:
+        return jsonify({'message': 'No chat history found for the given user.'}), 404
+
+    # Serialize the chat histories
+    chat_histories_dict = {}
+    for chat_history in chat_histories:
+        date_key = chat_history.date.strftime('%Y-%m-%d')
+        chat_histories_dict[date_key] = chat_history.chat_dump
+    print("chat_histories_dict", chat_histories_dict)
+    return jsonify(chat_histories_dict), 200  
 def determine_bmi_category(bmi):
     if bmi < 18.5:
         return 'Underweight'
@@ -955,6 +1025,8 @@ def get_suggested_calories():
         return jsonify({'message': 'User not found.'}), 404
 
     return jsonify({'email_id': user.email_id, 'suggested_calories': user.suggested_calories}), 200
+
+
 
 
 def insert_unique_categories():
