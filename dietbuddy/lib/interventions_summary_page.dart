@@ -1,4 +1,3 @@
-import 'package:dietbuddy/chat_history.dart';
 import 'package:dietbuddy/diet_chat_bot_page.dart';
 import 'package:dietbuddy/meal_options_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';

@@ -7,6 +7,7 @@ import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -22,7 +23,7 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final _openAI = OpenAI.instance.build(
-    token: "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",
+    token: dotenv.get("OPENAI_API_TOKEN"),
     baseOption: HttpSetup(
       receiveTimeout: const Duration(
         seconds: 5,
