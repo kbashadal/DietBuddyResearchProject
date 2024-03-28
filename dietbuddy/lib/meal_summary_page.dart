@@ -361,96 +361,6 @@ class MealSummaryPageState extends State<MealSummaryPage> {
     );
   }
 
-  void _showAddMealModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Wrap(
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Add Meal'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const MealOptionsPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('View Profile'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const UserProfilePage()),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildBottomNavigationBar(BuildContext context) {
-    return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-          backgroundColor: Colors.green,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.tips_and_updates),
-          label: 'Interventions',
-          backgroundColor: Colors.green,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history),
-          label: 'History',
-          backgroundColor: Colors.green,
-        ),
-      ],
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white70,
-      backgroundColor: Colors.green,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => MealSummaryPage(email: widget.email)),
-              (Route<dynamic> route) => false,
-            );
-            break;
-          case 1:
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const InterventionsSummaryPage()),
-            );
-            break;
-          case 2:
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
-            );
-            break;
-          default:
-            break;
-        }
-      },
-      type: BottomNavigationBarType.shifting, // Adds animation on tap
-      currentIndex: 0, // Set the current index to highlight the current page
-    );
-  }
-
   Widget _buildBarChart(BuildContext context) {
     // Convert _mealData into a list of Series for the chart
     List<charts.Series<MealCalories, String>> seriesList = _createChartData();
@@ -462,9 +372,9 @@ class MealSummaryPageState extends State<MealSummaryPage> {
         seriesList,
         animate: true, // Adds animation to the chart
         // Configure the axis to use string values
-        domainAxis: new charts.OrdinalAxisSpec(),
+        domainAxis: const charts.OrdinalAxisSpec(),
         // Configure bar renderer with corner radius
-        defaultRenderer: new charts.BarRendererConfig(
+        defaultRenderer: charts.BarRendererConfig(
             cornerStrategy: const charts.ConstCornerStrategy(30)),
         behaviors: [
           // Add a chart title
@@ -476,7 +386,7 @@ class MealSummaryPageState extends State<MealSummaryPage> {
           charts.SeriesLegend(
             position: charts.BehaviorPosition.bottom,
             horizontalFirst: false,
-            cellPadding: EdgeInsets.only(right: 4.0, bottom: 4.0),
+            cellPadding: const EdgeInsets.only(right: 4.0, bottom: 4.0),
           )
         ],
       ),
