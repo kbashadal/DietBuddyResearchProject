@@ -16,10 +16,7 @@ import re
 import numpy as np
 from collections import defaultdict
 
-
-
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/dietBuddy'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:wchKjb6q0uveqol3nuyXPKx32lrfHcmo@dpg-co5e3t7sc6pc73851tk0-a.oregon-postgres.render.com/deitbuddy'
 
 UPLOAD_FOLDER = 'static/profile_pics'
@@ -1145,7 +1142,7 @@ def calories_per_100g(volume_ml, calories):
     return 0
   else:
     return (calories * 100) / volume_ml
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()        
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     with app.app_context():
+#         db.create_all()        
+#     app.run(debug=True)
