@@ -46,7 +46,7 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
 
     final response = await http.get(
       Uri.parse(
-          'http://localhost:5000/get_user_alternate_food?emailId=$userEmail'),
+          'https://dietbuddyresearchproject.onrender.com/get_user_alternate_food?emailId=$userEmail'),
     );
 
     if (response.statusCode == 200) {
@@ -68,7 +68,7 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
 
     final response = await http.get(
       Uri.parse(
-          'http://localhost:5000/get_user_exercise_suggestions?emailId=$userEmail'),
+          'https://dietbuddyresearchproject.onrender.com/get_user_exercise_suggestions?emailId=$userEmail'),
     );
 
     if (response.statusCode == 200) {
@@ -91,7 +91,7 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
 
     final response = await http.get(
       Uri.parse(
-          'http://localhost:5000/get_user_chat_history?emailId=$userEmail'),
+          'https://dietbuddyresearchproject.onrender.com/get_user_chat_history?emailId=$userEmail'),
     );
 
     if (response.statusCode == 200) {

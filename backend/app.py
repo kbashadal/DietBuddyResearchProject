@@ -1056,7 +1056,7 @@ def insert_unique_categories():
 
 def insert_food_items():
     print("inserting unique categories")
-    insert_unique_categories()
+    # insert_unique_categories()
     print("testing")
     # Ensure categories are inserted first
     # insert_unique_categories()
