@@ -522,8 +522,11 @@ def add_user_meals():
         predicted_calories = model.predict(input_df)[0]     
         print("predicted_calories",predicted_calories)
         user = User.query.filter_by(email_id=user_email).first()
+        print("user",user,"user.id",user.id)
         food_item = FoodItems.query.filter_by(FoodItemName=food_item_name).first()
+        print("food_item",food_item,"food_item.id",food_item.id)
         meal_type = MealType.query.filter_by(name=meal_type_name).first()
+        print("meal_type",meal_type)
         if user and food_item and meal_type:
             # Create a new UserMeals object with the found entities and add it to the list
             new_meal = UserMeals(user_id=user.id, item_id=food_item.id, meal_type_id=meal_type.id, date=date, time=time,
