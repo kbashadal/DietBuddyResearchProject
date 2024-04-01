@@ -437,7 +437,7 @@ def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi, activit
 
 @app.route('/register', methods=['POST'])
 def register_user():
-    insert_food_items()
+    # insert_food_items()
     # Access form data (text fields)
     data = request.form.to_dict()
     height_in_meters = int(data['height']) / 100
@@ -1051,10 +1051,14 @@ def insert_unique_categories():
     db.session.commit()
 
 def insert_food_items():
+    print("inserting unique categories")
+    insert_unique_categories()
+    print("testing")
     # Ensure categories are inserted first
     # insert_unique_categories()
     
     # Insert items from caffeine.csv
+    print("inserting caffeine")
     with open('archive-4/caffeine.csv', mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -1072,6 +1076,7 @@ def insert_food_items():
                 db.session.add(new_food_item)
     
     # Insert items from calories.csv
+    print("inserting calories")
     with open('archive-4/calories.csv', mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -1092,6 +1097,7 @@ def insert_food_items():
                     category_id=category.id
                 )
                 db.session.add(new_food_item)
+    print("inserting menu")
     with open('archive-4/menu.csv', mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -1114,6 +1120,7 @@ def insert_food_items():
                     db.session.add(new_food_item)
                     
                 unique_workouts = set()
+        print("inserting activity")
         with open('archive-4/Activity_Dataset_V1.csv', mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
@@ -1121,7 +1128,8 @@ def insert_food_items():
                 if workout_type not in unique_workouts:
                     unique_workouts.add(workout_type)
                     new_exercise = Exercise(workout_type=workout_type)
-                    db.session.add(new_exercise)        
+                    db.session.add(new_exercise)      
+    print()  
     db.session.commit()
     
     
@@ -1142,7 +1150,8 @@ def calories_per_100g(volume_ml, calories):
     return 0
   else:
     return (calories * 100) / volume_ml
-# if __name__ == '__main__':
+# if __name__ == '__main__':    
 #     with app.app_context():
+#         insert_food_items()
 #         db.create_all()        
 #     app.run(debug=True)
