@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'package:dietbuddy/login_page.dart';
 import 'package:flutter/foundation.dart';
@@ -35,7 +37,9 @@ class RegistrationPageState extends State<RegistrationPage> {
   }
 
   Future<void> registerUser(BuildContext context) async {
-    const url = 'http://127.0.0.1:5000/register';
+    // const url = 'http://127.0.0.1:5000/register';
+    const url = 'https://dietbuddyresearchproject.onrender.com/register';
+
     final Uri uri = Uri.parse(url);
 
     // Create a multipart request
@@ -83,6 +87,9 @@ class RegistrationPageState extends State<RegistrationPage> {
     } catch (e) {
       if (kDebugMode) {
         print('Error occurred while sending registration data: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
       }
     }
   }

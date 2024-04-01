@@ -28,7 +28,8 @@ class UserProfilePageState extends State<UserProfilePage> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.email;
     final response = await http.get(
-      Uri.parse('http://localhost:5000/user_profile?email_id=$userEmail'),
+      Uri.parse(
+          'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=$userEmail'),
     );
 
     if (response.statusCode == 200) {

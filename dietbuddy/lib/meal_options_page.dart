@@ -27,7 +27,7 @@ class MealOptionsPageState extends State<MealOptionsPage> {
     final userEmail = userProvider.email;
     final response = await http.get(
       Uri.parse(
-          'http://localhost:5000/total_calories_by_email_and_type?meal_type=$mealType&email_id=$userEmail'),
+          'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_and_type?meal_type=$mealType&email_id=$userEmail'),
     );
 
     if (response.statusCode == 200) {
@@ -52,7 +52,7 @@ class MealOptionsPageState extends State<MealOptionsPage> {
     final userEmail = userProvider.email;
     final response = await http.get(
       Uri.parse(
-          'http://localhost:5000/user_meals_by_email_and_type?meal_type=$mealTypeFilter&email_id=$userEmail'),
+          'https://dietbuddyresearchproject.onrender.com/user_meals_by_email_and_type?meal_type=$mealTypeFilter&email_id=$userEmail'),
     );
     if (response.statusCode == 200) {
       final Map<String, dynamic> mealsData = jsonDecode(response.body);

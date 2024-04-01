@@ -32,7 +32,7 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
     final userEmail = userProvider.email;
     final String formattedDate = "${date.year}-${date.month}-${date.day}";
     final response = await http.get(Uri.parse(
-        'http://localhost:5000/total_calories_by_email_and_date?email_id=$userEmail&date=$formattedDate'));
+        'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_and_date?email_id=$userEmail&date=$formattedDate'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -228,7 +228,7 @@ class ViewHistoryPageState extends State<ViewHistoryPage> {
 
   Future<double> fetchSuggestedCaloriesLimit() async {
     final profileUrl = Uri.parse(
-        'http://localhost:5000/user_profile?email_id=${Provider.of<UserProvider>(context, listen: false).email}');
+        'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=${Provider.of<UserProvider>(context, listen: false).email}');
     final profileResponse = await http.get(profileUrl);
     if (profileResponse.statusCode == 200) {
       final profileData = json.decode(profileResponse.body);

@@ -227,7 +227,8 @@ class _ChatPageState extends State<ChatPage> {
         });
       }
     }
-    final url = Uri.parse('http://127.0.0.1:5000/save_user_chat_history');
+    final url = Uri.parse(
+        'https://dietbuddyresearchproject.onrender.com/save_user_chat_history');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
