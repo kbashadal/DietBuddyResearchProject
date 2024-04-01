@@ -1080,7 +1080,7 @@ def insert_food_items():
             
             if 'cal' in Cals_per100grams:
                 Cals_per100grams = Cals_per100grams.replace('cal', '')[0]
-            print("Cals_per100grams",Cals_per100grams)    
+            # print("Cals_per100grams",Cals_per100grams)    
             if category:
                 new_food_item = FoodItems(
                     FoodItemName=row['FoodItem'],
