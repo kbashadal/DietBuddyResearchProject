@@ -394,35 +394,4 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
         break;
     }
   }
-
-  void _showActionSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Wrap(
-          children: <Widget>[
-            ListTile(
-              leading: Icon(Icons.add, color: Theme.of(context).primaryColor),
-              title: const Text('Add Meal', style: TextStyle(fontSize: 16)),
-              onTap: () => _navigateTo(context, const MealOptionsPage()),
-            ),
-            ListTile(
-              leading:
-                  Icon(Icons.person, color: Theme.of(context).primaryColor),
-              title: const Text('View Profile', style: TextStyle(fontSize: 16)),
-              onTap: () => _navigateTo(context, const UserProfilePage()),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _navigateTo(BuildContext context, Widget page) {
-    Navigator.pop(context); // Close the bottom sheet
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
-  }
 }

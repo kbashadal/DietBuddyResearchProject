@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
-import 'package:dietbuddy/consts.dart';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/user_provider.dart';

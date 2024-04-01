@@ -80,7 +80,6 @@ class MealOptionsPageState extends State<MealOptionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     // Enhanced UI for a more professional and user-friendly experience
     return Scaffold(
       appBar: AppBar(

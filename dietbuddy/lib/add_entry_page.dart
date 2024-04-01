@@ -250,8 +250,8 @@ class AddEntryPageState extends State<AddEntryPage> {
 
       final double dailyCalorieLimit = await fetchSuggestedCaloriesLimit();
 
-      if (totalCalories > dailyCalorieLimit) {
-        // if (totalCalories > 20) {
+      // if (totalCalories > dailyCalorieLimit) {
+      if (totalCalories > 200) {
         await showInterventionDialog();
         if (kDebugMode) {
           print(
@@ -1041,105 +1041,6 @@ class AddEntryPageState extends State<AddEntryPage> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-    );
-  }
-
-  BottomNavigationBar _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-          backgroundColor: Colors.blue,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.tips_and_updates),
-          label: 'Interventions',
-          backgroundColor: Colors.blue,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history),
-          label: 'History',
-          backgroundColor: Colors.blue,
-        ),
-      ],
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white70,
-      backgroundColor: Colors.green,
-      onTap: _onBottomNavigationBarTapped,
-    );
-  }
-
-  void _onBottomNavigationBarTapped(int index) {
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MealSummaryPage(
-              email:
-                  Provider.of<UserProvider>(context, listen: false).email ?? '',
-            ),
-          ),
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const InterventionsSummaryPage()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ViewHistoryPage()),
-        );
-        break;
-    }
-  }
-
-  FloatingActionButton _buildFloatingActionButton() {
-    return FloatingActionButton(
-      onPressed: () => _showModalBottomSheet(),
-      backgroundColor: Colors.green,
-      child: const Icon(Icons.add, color: Colors.white),
-    );
-  }
-
-  void _showModalBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Wrap(
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Add Meal'),
-              onTap: () {
-                Navigator.pop(context); // Close the modal bottom sheet
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const MealOptionsPage()),
-                ); // Navigate to the MealOptionsPage
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('View Profile'),
-              onTap: () {
-                Navigator.pop(context); // Close the modal bottom sheet
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const UserProfilePage()),
-                ); // Navigate to the UserProfilePage
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }
