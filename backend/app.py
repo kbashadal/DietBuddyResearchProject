@@ -520,6 +520,7 @@ def add_user_meals():
             volume = float(0)
             Caffeine = float(0)
         predicted_calories = model.predict(input_df)[0]     
+        print("predicted_calories",predicted_calories)
         user = User.query.filter_by(email_id=user_email).first()
         food_item = FoodItems.query.filter_by(FoodItemName=food_item_name).first()
         meal_type = MealType.query.filter_by(name=meal_type_name).first()
