@@ -437,7 +437,7 @@ def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi, activit
 
 @app.route('/register', methods=['POST'])
 def register_user():
-    # insert_food_items()
+    insert_food_items()
     # Access form data (text fields)
     data = request.form.to_dict()
     height_in_meters = int(data['height']) / 100
