@@ -58,7 +58,23 @@ class RegistrationPageState extends State<RegistrationPage> {
 
     try {
       // Send the request
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Dialog(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                Text("Loading"),
+              ],
+            ),
+          );
+        },
+      );
       var response = await request.send();
+      Navigator.pop(context); // Close the loading dialog
 
       // Listen for response
       response.stream.transform(utf8.decoder).listen((value) {

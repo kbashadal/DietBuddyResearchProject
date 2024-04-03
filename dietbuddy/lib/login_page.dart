@@ -34,12 +34,28 @@ class LoginPageState extends State<LoginPage> {
     };
 
     try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Dialog(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                Text("Loading"),
+              ],
+            ),
+          );
+        },
+      );
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(loginData),
       );
-
+      // ignore: use_build_context_synchronously
+      Navigator.pop(context); // Close the loading dialog
       final responseBody = json.decode(response.body);
 
       if (response.statusCode == 200) {
@@ -57,6 +73,13 @@ class LoginPageState extends State<LoginPage> {
       } else {
         // Handle login error
         if (kDebugMode) {
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login failed: ${responseBody['message']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
           print('Login failed: ${responseBody['message']}');
         }
         // Show error message
