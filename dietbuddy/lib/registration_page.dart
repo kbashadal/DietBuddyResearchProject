@@ -23,6 +23,8 @@ class RegistrationPageState extends State<RegistrationPage> {
   DateTime _selectedDate = DateTime.now();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _targetWeightController = TextEditingController();
+  final TextEditingController _durationController = TextEditingController();
   String _selectedActivityLevel = 'Sedentary'; // Default to Sedentary
 
   @override
@@ -33,12 +35,14 @@ class RegistrationPageState extends State<RegistrationPage> {
     _confirmPasswordController.dispose();
     _heightController.dispose();
     _weightController.dispose();
+    _targetWeightController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 
   Future<void> registerUser(BuildContext context) async {
-    // const url = 'http://127.0.0.1:5000/register';
-    const url = 'https://dietbuddyresearchproject.onrender.com/register';
+    const url = 'http://127.0.0.1:5000/register';
+    // const url = 'https://dietbuddyresearchproject.onrender.com/register';
 
     final Uri uri = Uri.parse(url);
 
@@ -51,6 +55,8 @@ class RegistrationPageState extends State<RegistrationPage> {
       ..fields['gender'] = _selectedGender
       ..fields['height'] = _heightController.text
       ..fields['weight'] = _weightController.text
+      ..fields['targetWeight'] = _targetWeightController.text
+      ..fields['duration'] = _durationController.text
       ..fields['dateOfBirth'] = "${_selectedDate.toLocal()}".split(' ')[0]
       ..fields['activityLevel'] = _selectedActivityLevel;
 
@@ -127,181 +133,345 @@ class RegistrationPageState extends State<RegistrationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue[50], // Changed to a more academic color
-          title: Image.asset(
-            'assets/name.png', // Changed asset name for a more academic look
-            width: 150, // Adjusted size for a more refined look
-            height: 150,
-            fit: BoxFit.contain,
-          ),
-          centerTitle: true, // Centered the title for a more balanced look
+      appBar: AppBar(
+        backgroundColor: Colors.blue[50], // Changed to a more academic color
+        title: Image.asset(
+          'assets/name.png', // Changed asset name for a more academic look
+          width: 150, // Adjusted size for a more refined look
+          height: 150,
+          fit: BoxFit.contain,
         ),
-        body: Container(
-          color: Colors.blue[50], // Matching the appBar color for consistency
-          padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 12.0), // Adjusted padding for better spacing
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                SizedBox(
-                    height: MediaQuery.of(context).size.height *
-                        0.05), // Reduced space for a tighter layout
-
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.person_outline),
-                    fillColor:
-                        Colors.white, // Added fill color for a cleaner look
-                    filled: true,
+        centerTitle: true, // Centered the title for a more balanced look
+      ),
+      body: Container(
+        color: Colors.blue[50], // Matching the appBar color for consistency
+        padding: const EdgeInsets.symmetric(
+            horizontal: 24.0,
+            vertical: 12.0), // Adjusted padding for better spacing
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Card(
+                color: Colors.transparent,
+                elevation: 0,
+                // First frame for personal details
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _fullNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Full Name',
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.person_outline),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _emailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email ID',
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.email_outlined),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _passwordController,
+                              decoration: const InputDecoration(
+                                labelText: 'Password',
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.lock_outline),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                              obscureText: true,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _confirmPasswordController,
+                              decoration: const InputDecoration(
+                                labelText: 'Confirm Password',
+                                border: OutlineInputBorder(),
+                                suffixIcon: Icon(Icons.lock_reset),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                              obscureText: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ListTile(
+                        title: const Text('Date of Birth'),
+                        subtitle: Text(
+                          "${_selectedDate.toLocal()}".split(' ')[0],
+                        ),
+                        trailing: const Icon(Icons.calendar_today),
+                        onTap: () => _selectDate(context),
+                        shape: RoundedRectangleBorder(
+                          side: const BorderSide(color: Colors.grey, width: 1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email ID',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.email_outlined),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                  keyboardType: TextInputType.emailAddress,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey,
+                        thickness: 1,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'Data to calculate Calories',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey,
+                        thickness: 1,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.lock_outline),
-                    fillColor: Colors.white,
-                    filled: true,
+              ),
+              const SizedBox(height: 10),
+              Card(
+                // Second frame for additional details
+                color: Colors.transparent,
+                elevation: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment
+                            .spaceEvenly, // Align to the start of the row
+                        children: [
+                          SizedBox(
+                            width:
+                                115, // Set the width to a smaller value as needed
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedGender,
+                              items: <String>[
+                                'Male',
+                                'Female',
+                                'Other'
+                              ].map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedGender = newValue!;
+                                });
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Gender',
+                                border: OutlineInputBorder(),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width:
+                                210, // Set the width to a smaller value as needed
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedActivityLevel,
+                              items: <String>[
+                                'Sedentary',
+                                'Lightly Active',
+                                'Moderately Active',
+                                'Very Active'
+                              ].map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedActivityLevel = newValue!;
+                                });
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Activity Level',
+                                border: OutlineInputBorder(),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 160, // Adjust the width as needed
+                            child: TextFormField(
+                              controller: _heightController,
+                              decoration: const InputDecoration(
+                                labelText: 'Ht (cm)',
+                                border: OutlineInputBorder(),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width: 160, // Adjust the width as needed
+                            child: TextFormField(
+                              controller: _weightController,
+                              decoration: const InputDecoration(
+                                labelText: 'Wt (kg)',
+                                border: OutlineInputBorder(),
+                                fillColor: Colors.white,
+                                filled: true,
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                   ),
-                  obscureText: true,
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.lock_reset),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                  obscureText: true,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey,
+                        thickness: 1,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'Set Goal',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: Colors.grey,
+                        thickness: 1,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  value: _selectedGender,
-                  items: <String>['Male', 'Female', 'Other']
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedGender = newValue!;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Gender',
-                    border: OutlineInputBorder(),
-                    fillColor: Colors.white,
-                    filled: true,
+              ),
+              Card(
+                color: Colors.transparent,
+                elevation: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      SizedBox(
+                        width: 100, // Adjusted width for side by side layout
+                        child: TextFormField(
+                          controller: _targetWeightController,
+                          decoration: const InputDecoration(
+                            labelText: 'Target Wt (kg)',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.fitness_center),
+                            fillColor: Colors.white,
+                            filled: true,
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 160, // Adjusted width for side by side layout
+                        child: TextFormField(
+                          controller: _durationController,
+                          decoration: const InputDecoration(
+                            labelText: 'Duration (wks)',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.calendar_today),
+                            fillColor: Colors.white,
+                            filled: true,
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  value: _selectedActivityLevel,
-                  items: <String>[
-                    'Sedentary',
-                    'Lightly Active',
-                    'Moderately Active',
-                    'Very Active'
-                  ].map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedActivityLevel = newValue!;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Activity Level',
-                    border: OutlineInputBorder(),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _heightController,
-                  decoration: const InputDecoration(
-                    labelText: 'Height (cm)',
-                    border: OutlineInputBorder(),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _weightController,
-                  decoration: const InputDecoration(
-                    labelText: 'Weight (kg)',
-                    border: OutlineInputBorder(),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  title: const Text('Date of Birth'),
-                  subtitle: Text(
-                    "${_selectedDate.toLocal()}".split(' ')[0],
-                  ),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () => _selectDate(context),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // Handle registration logic
+                  registerUser(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, // Button color
                   shape: RoundedRectangleBorder(
-                    side: const BorderSide(color: Colors.grey, width: 1),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 15.0),
+                  textStyle: const TextStyle(
+                    fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle registration logic
-                    registerUser(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green, // Changed button color for a
-                    // Changed button color for a more academic look
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 15.0),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                    ),
-                  ),
-                  child: const Text('Register'),
-                ),
-              ],
-            ),
+                child: const Text('Register'),
+              ),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

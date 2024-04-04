@@ -4,6 +4,7 @@ import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -17,19 +18,79 @@ class UserProfilePage extends StatefulWidget {
 
 class UserProfilePageState extends State<UserProfilePage> {
   late Future<Map<String, dynamic>> _profileData;
+  late TextEditingController _fullNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _dateOfBirthController;
+  late TextEditingController _heightController;
+  late TextEditingController _weightController;
+  late TextEditingController _targetCaloriesController;
+  late TextEditingController _activityLevelController;
+  late TextEditingController _targetWeightController;
+  late TextEditingController _durationController;
+  late TextEditingController _bmiController;
+  late TextEditingController _bmiCategoryController;
+  DateTime _selectedDate = DateTime.now();
+  String userDateOfBirth = '';
+  @override
+  void dispose() {
+    _dateOfBirthController.dispose();
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    _targetCaloriesController.dispose();
+    _activityLevelController.dispose();
+    _targetWeightController.dispose();
+    _durationController.dispose();
+    _bmiController.dispose();
+    _bmiCategoryController.dispose();
+    // Dispose other controllers and resources
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     _profileData = _fetchUserProfile();
+    _fullNameController = TextEditingController();
+    _emailController = TextEditingController();
+    _dateOfBirthController = TextEditingController();
+    _heightController = TextEditingController();
+    _weightController = TextEditingController();
+    _targetCaloriesController = TextEditingController();
+    _activityLevelController = TextEditingController();
+    _targetWeightController = TextEditingController();
+    _durationController = TextEditingController();
+    _bmiController = TextEditingController();
+    _bmiCategoryController = TextEditingController();
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate, // from your existing code
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateOfBirthController.text =
+            _selectedDate.toLocal().toString().split(' ')[0];
+        userDateOfBirth = _selectedDate.toLocal().toString().split(' ')[0];
+      });
+    }
   }
 
   Future<Map<String, dynamic>> _fetchUserProfile() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.email;
+    // final response = await http.get(
+    //   Uri.parse(
+    //       'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=$userEmail'),
+    // );
     final response = await http.get(
-      Uri.parse(
-          'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=$userEmail'),
+      Uri.parse('http://127.0.0.1:5000/user_profile?email_id=$userEmail'),
     );
 
     if (response.statusCode == 200) {
@@ -52,101 +113,261 @@ class UserProfilePageState extends State<UserProfilePage> {
           ),
         ),
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _profileData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasData) {
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+      body: Container(
+        color: Colors.blue[50],
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _profileData,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasData) {
+                _fullNameController.text = snapshot.data!['full_name'];
+                _emailController.text = snapshot.data!['email_id'];
+                _dateOfBirthController.text = snapshot.data!['date_of_birth'];
+                _heightController.text = snapshot.data!['height'].toString();
+                _weightController.text = snapshot.data!['weight'].toString();
+                _targetCaloriesController.text =
+                    snapshot.data!['suggested_calories'].toString();
+                _activityLevelController.text =
+                    snapshot.data!['activity_level'].toString();
+                _targetWeightController.text =
+                    snapshot.data!['target_weight'].toString();
+                _durationController.text =
+                    snapshot.data!['duration'].toString();
+                _bmiController.text = snapshot.data!['bmi'].toString();
+                _bmiCategoryController.text = snapshot.data!['bmi_category'];
+                _selectedDate = DateTime.parse(snapshot.data!['date_of_birth']);
+                return SingleChildScrollView(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      // Profile picture section removed
-                      TextFormField(
-                        initialValue: snapshot.data!['full_name'],
-                        decoration:
-                            const InputDecoration(labelText: 'Full Name'),
-                      ),
-                      TextFormField(
-                        initialValue: snapshot.data!['email_id'],
-                        decoration: const InputDecoration(labelText: 'Email'),
-                        enabled: false, // Makes the field uneditable
-                      ),
-                      TextFormField(
-                        initialValue: snapshot.data!['date_of_birth'],
-                        decoration:
-                            const InputDecoration(labelText: 'Date of Birth'),
-                      ),
-                      TextFormField(
-                        initialValue: snapshot.data!['height'].toString(),
-                        decoration:
-                            const InputDecoration(labelText: 'Height (m)'),
-                      ),
-                      TextFormField(
-                        initialValue: snapshot.data!['weight'].toString(),
-                        decoration:
-                            const InputDecoration(labelText: 'Weight (kg)'),
-                      ),
-                      TextFormField(
-                        initialValue: snapshot.data!['bmi'].toStringAsFixed(2),
-                        decoration: const InputDecoration(labelText: 'BMI'),
-                      ),
-                      TextFormField(
-                        initialValue: snapshot.data!['bmi_category'],
-                        decoration:
-                            const InputDecoration(labelText: 'BMI Category'),
-                        enabled: false, // Makes the field uneditable
-                      ),
-                      TextFormField(
-                        initialValue:
-                            snapshot.data!['suggested_calories'].toString(),
-                        decoration: const InputDecoration(
-                            labelText: 'Suggested Calories'),
-                        enabled: false, // Makes the field uneditable
-                      ),
-                      Tooltip(
-                        message:
-                            '${snapshot.data!['suggested_calories']} calories',
-                        child: Slider(
-                          value:
-                              snapshot.data!['suggested_calories'].toDouble(),
-                          min: 1000,
-                          max: 4000,
-                          divisions: 60,
-                          label:
-                              '${snapshot.data!['suggested_calories']} calories',
-                          onChanged: (double value) {
-                            setState(() {
-                              snapshot.data!['suggested_calories'] =
-                                  value.round();
-                            });
-                          },
+                      Card(
+                        color: Colors.transparent,
+                        elevation: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _fullNameController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Full Name',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _emailController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Email',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 10),
+                              ListTile(
+                                title: const Text('Date of Birth'),
+                                subtitle: Text(
+                                  _selectedDate
+                                      .toLocal()
+                                      .toString()
+                                      .split(' ')[0],
+                                ),
+                                trailing: const Icon(Icons.calendar_today),
+                                onTap: () => _pickDate(context),
+                                shape: RoundedRectangleBorder(
+                                  side: const BorderSide(
+                                      color: Colors.grey, width: 1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _heightController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Height (cm)',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _weightController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Weight (kg)',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _bmiController,
+                                decoration: const InputDecoration(
+                                  labelText: 'BMI',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                  enabled: false,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _bmiCategoryController,
+                                decoration: const InputDecoration(
+                                  labelText: 'BMI Category',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                                enabled: false,
+                              ),
+                              const SizedBox(height: 10),
+                              TextFormField(
+                                controller: _targetCaloriesController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Target Calories',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width:
+                                    210, // Set the width to a smaller value as needed
+                                child: DropdownButtonFormField<String>(
+                                  value: _activityLevelController.text,
+                                  items: <String>[
+                                    'Sedentary',
+                                    'Lightly Active',
+                                    'Moderately Active',
+                                    'Very Active'
+                                  ].map<DropdownMenuItem<String>>(
+                                      (String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      _activityLevelController.text = newValue!;
+                                    });
+                                  },
+                                  decoration: const InputDecoration(
+                                    labelText: 'Activity Level',
+                                    border: OutlineInputBorder(),
+                                    fillColor: Colors.white,
+                                    filled: true,
+                                  ),
+                                ),
+                              ),
+                              TextFormField(
+                                controller: _durationController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Duration (Weeks)',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                              ),
+                              TextFormField(
+                                controller: _targetWeightController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Target Weight',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .popUntil((route) => route.isFirst);
+                                      SystemNavigator.pop();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(20.0),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 15.0, horizontal: 30.0),
+                                      textStyle: const TextStyle(fontSize: 18),
+                                    ),
+                                    child: const Text('Log Off'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (BuildContext context) {
+                                          return const Dialog(
+                                            child: Padding(
+                                              padding: EdgeInsets.all(20.0),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  CircularProgressIndicator(),
+                                                  SizedBox(width: 15),
+                                                  Text("Updating..."),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                      _updateUserProfile();
+                                      Navigator.pop(
+                                          context); // Close the dialog
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Profile updated successfully'),
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(20.0),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 15.0, horizontal: 30.0),
+                                      textStyle: const TextStyle(fontSize: 18),
+                                    ),
+                                    child: const Text('Update Profile'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context)
-                              .popUntil((route) => route.isFirst);
-                          SystemNavigator.pop();
-
-                          // Log off logic
-                        },
-                        child: const Text('Log-Off'),
                       ),
                     ],
                   ),
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+                );
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
             }
-          }
-          // By default, show a loading spinner.
-          return const Center(child: CircularProgressIndicator());
-        },
+            return const Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -197,5 +418,55 @@ class UserProfilePageState extends State<UserProfilePage> {
         },
       ),
     );
+  }
+
+  void _updateUserProfile() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.email;
+    final userFullName = _fullNameController.text;
+    userDateOfBirth = _dateOfBirthController.text;
+    final userHeight =
+        (_heightController.text); // Corrected from String.parse to double.parse
+    final userWeight = (_weightController.text);
+    final userTargetCalories = (_targetCaloriesController.text);
+    final userActivityLevel = (_activityLevelController.text);
+    final userDuration = (_durationController.text);
+    final userTargetWeight = (_targetWeightController.text);
+    final userBMI = (_bmiController.text);
+    final userBMIcategory = (_bmiCategoryController.text);
+    const api =
+        'http://127.0.0.1:5000/update_user_profile'; // Replace with your actual API URL
+    final body = jsonEncode({
+      'emailId': userEmail,
+      'fullName': userFullName,
+      'dateOfBirth': userDateOfBirth,
+      'height': userHeight,
+      'weight': userWeight,
+      'suggestedCalories': userTargetCalories,
+      'activityLevel': userActivityLevel,
+      'duration': userDuration,
+      'targetWeight': userTargetWeight,
+      'bmi': userBMI,
+      'bmiCategory': userBMIcategory,
+    });
+
+    http
+        .post(
+      Uri.parse(api),
+      headers: {"Content-Type": "application/json"},
+      body: body,
+    )
+        .then((response) {
+      if (response.statusCode == 200) {
+        setState(() {
+          _profileData = _fetchUserProfile();
+        });
+        print('User profile updated successfully');
+      } else {
+        print('Failed to update user profile');
+      }
+    }).catchError((error) {
+      print('Error updating user profile: $error');
+    });
   }
 }

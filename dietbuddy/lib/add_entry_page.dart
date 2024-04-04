@@ -857,6 +857,21 @@ class AddEntryPageState extends State<AddEntryPage> {
                     ),
                   ),
                   onPressed: () async {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (BuildContext context) {
+                        return const Dialog(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              Text("Loading"),
+                            ],
+                          ),
+                        );
+                      },
+                    );
                     final response = await sendDataToAPI();
                     if (!mounted) {
                       return; // Check if the widget is still mounted

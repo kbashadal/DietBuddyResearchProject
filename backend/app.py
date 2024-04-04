@@ -124,6 +124,10 @@ class User(db.Model):
     bmi = db.Column(db.Float, nullable=True)  # Add this line for BMI
     bmi_category = db.Column(db.String(50), nullable=True)  # Add this line for BMI category
     suggested_calories = db.Column(db.Float, nullable=True)  # Add this line for suggested calories
+    duration = db.Column(db.Float, nullable=True)
+    target_weight = db.Column(db.Float, nullable=True)
+    activity_level = db.Column(db.String(50), nullable=True)
+    gender = db.Column(db.String(10), nullable=True)
 
 
 
@@ -399,28 +403,39 @@ def get_user_exercise_suggestions_by_date():
 # The Total Daily Energy Expenditure (TDEE) is calculated by multiplying the BMR with 
 # an activity factor. Here's a separate method that takes age, gender, weight, height, and BMI 
 # to calculate the suggested calories. 
-def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi, activity_level):
+def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi,
+                                 activity_level, target_weight, 
+                                 targetedDuration):
     """
-    Calculate suggested daily calories intake.
+    Calculate suggested daily calories intake for reaching the target weight within a specified duration.
 
     Parameters:
     - age: in years
     - gender: 'male' or 'female'
-    - weight_kg: weight in kilograms
+    - weight_kg: current weight in kilograms
     - height_cm: height in centimeters
     - bmi: Body Mass Index
     - activity_level: 'Sedentary', 'Lightly active', 'Moderately active', or 'Very active'
+    - target_weight: desired weight in kilograms
+    - targetedDuration: duration in weeks to reach the target weight
 
     Returns:
-    - suggested_calories: Estimated daily calories intake
+    - suggested_calories: Estimated daily calories intake to reach the target weight within the specified duration
     """
-    # Calculate BMR using the Mifflin-St Jeor Equation
-    if gender == 'male':
-        bmr = (10 * float(weight_kg)) + (6.25 * float(height_cm)) - (5 * age) + 5
+    # Calculate BMR for the current weight using the Mifflin-St Jeor Equation
+    if gender == 'Male':
+        bmr_current = (10 * float(weight_kg)) + (6.25 * float(height_cm)) - (5 * age) + 5
     else:  # female
-        bmr = (10 * float(weight_kg)) + (6.25 * float(height_cm)) - (5 * age) - 161
+        bmr_current = (10 * float(weight_kg)) + (6.25 * float(height_cm)) - (5 * age) - 161
+
+    # Calculate BMR for the target weight using the same equation
+    if gender == 'Male':
+        bmr_target = (10 * float(target_weight)) + (6.25 * float(height_cm)) - (5 * age) + 5
+    else:
+        bmr_target = (10 * float(target_weight)) + (6.25 * float(height_cm)) - (5 * age) - 161
 
     # Map activity level to a multiplier
+    
     activity_multipliers = {
         'Sedentary': 1.2,
         'Lightly active': 1.375,
@@ -430,23 +445,95 @@ def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi, activit
 
     activity_factor = activity_multipliers.get(activity_level, 1.2)  # Default to Sedentary if not found
 
-    # Calculate Total Daily Energy Expenditure (TDEE) by multiplying BMR with the activity level
-    suggested_calories = bmr * activity_factor
+    # Calculate Total Daily Energy Expenditure (TDEE) for both current and target BMRs
+    tdee_current = bmr_current * activity_factor
+    tdee_target = bmr_target * activity_factor
+
+    # Calculate the calorie deficit or surplus per day required to reach the target weight within the targeted duration
+    weight_difference_kg = float(weight_kg) - float(target_weight)
+    calories_per_kg = 7700  # Approximate calories per kg of body weight
+    total_calories_difference = abs(weight_difference_kg) * calories_per_kg
+    daily_calories_difference = total_calories_difference / (int(targetedDuration) * 7)  # Convert weeks to days
+
+    # Adjust the suggested calories intake based on the target weight and duration
+    if float(target_weight) < float(weight_kg):
+        suggested_calories = tdee_current - daily_calories_difference  # Creating a deficit to lose weight
+    elif float(target_weight) > float(weight_kg):
+        suggested_calories = tdee_current + daily_calories_difference  # Creating a surplus to gain weight
+    else:
+        suggested_calories = tdee_current  # Maintain current weight
 
     return suggested_calories
-
+@app.route('/update_user_profile', methods=['POST'])
+def update_user_profile():
+    data = request.json  # Get the JSON data sent to the endpoint
+    
+    # Extract user identification and profile update data
+    
+    email_id = data.get('emailId')
+    if not email_id:
+        return jsonify({'error': 'Missing emailId parameter'}), 400
+    
+    # Find user by email
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'error': 'User not found.'}), 404
+    
+    # Update user profile fields if provided in the request
+    if 'fullName' in data:
+        user.full_name = data['fullName']
+    if 'height' in data:
+        user.height = float(data['height'])
+    if 'weight' in data:
+        user.weight = float(data['weight'])
+    if 'dateOfBirth' in data:
+        user.date_of_birth = data['dateOfBirth']
+        print("data['dateOfBirth']",data['dateOfBirth'])
+        age = (datetime.datetime.today().date() - datetime.datetime.strptime(data['dateOfBirth'], '%Y-%m-%d').date()).days // 365
+    if 'gender' in data:
+        user.gender = data['gender']
+    if 'activityLevel' in data:
+        user.activity_level = data['activityLevel']
+    if 'duration' in data:
+        user.duration = data['duration']
+    if 'targetWeight' in data:
+        user.target_weight = data['targetWeight']
+    if 'suggestedCalories' in data:
+        suggested_calories = calculate_suggested_calories(age=age, gender=user.gender, weight_kg=data['weight'], height_cm=float(float(data['height'])), bmi=user.bmi, activity_level=data['activityLevel'], target_weight=data['targetWeight'], targetedDuration=data['duration'])        
+        print("suggested_calories",suggested_calories)
+        user.suggested_calories = suggested_calories
+    if 'bmi' in data:
+        height_in_meters = float(data['height']) / 100
+        user.bmi =float(data['weight']) / ((height_in_meters) ** 2)
+    if 'bmiCategory' in data:
+        user.bmi_category = determine_bmi_category(user.bmi)
+        
+    # Save the changes to the database
+    
+    try:
+        db.session.commit()
+        return jsonify({'message': 'User profile updated successfully.'}), 200
+    except Exception as e:
+        print("Exception",e)
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 @app.route('/register', methods=['POST'])
 def register_user():
     # insert_food_items()
     # Access form data (text fields)
     data = request.form.to_dict()
-    height_in_meters = int(data['height']) / 100
-    bmi = float(data['weight']) / (height_in_meters ** 2)
+    height_in_meters = int(data['height'])
+    bmi = float(data['weight']) / ((float(data['height'])*100) ** 2)
     bmi_category = determine_bmi_category(bmi)  # Determine the BMI category
     activity_level = data['activityLevel']
     date_of_birth = datetime.datetime.strptime(data['dateOfBirth'], '%Y-%m-%d').date()
     today = datetime.datetime.today().date()
     age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
+    target_weight = float(data['targetWeight'])
+    duration = int(data['duration'])
+    gender = data['gender']
+    
+    
 
     # Handle profile picture upload
     profile_pic_file = request.files.get('profilePic')
@@ -462,11 +549,13 @@ def register_user():
             profile_pic_path = file_path
         else:
             profile_pic_path = None
-        suggested_calories = calculate_suggested_calories(age=age, gender=data['gender'], weight_kg=data['weight'], height_cm=data['height'], bmi=bmi, activity_level=data['activityLevel'])
+        suggested_calories = calculate_suggested_calories(age=age, gender=data['gender'], weight_kg=data['weight'], height_cm=data['height'], bmi=bmi, activity_level=data['activityLevel'], target_weight=target_weight, targetedDuration=duration)
         print("suggested_calories",suggested_calories)
         new_user = User(email_id=data['email'], full_name=data['fullName'],
-                        height=height_in_meters, weight=data['weight'], date_of_birth=data['dateOfBirth'],
-                        profile_pic=profile_pic_path, bmi=bmi, bmi_category=bmi_category,suggested_calories=suggested_calories)
+                        height=data['height'], weight=data['weight'], date_of_birth=data['dateOfBirth'],
+                        profile_pic=profile_pic_path, bmi=bmi, bmi_category=bmi_category,
+                        suggested_calories=suggested_calories,activity_level=activity_level,
+                        target_weight=target_weight,duration=duration,gender=gender)
         new_user.set_password(data['password'])  # Set the hashed password
         db.session.add(new_user)
         db.session.commit()
@@ -474,6 +563,7 @@ def register_user():
     except IntegrityError:
         db.session.rollback()
         return jsonify({'message': 'This email is already registered.'}), 409
+
 
 @app.route('/login', methods=['POST'])
 def login_user():
@@ -1012,9 +1102,12 @@ def get_user_profile():
         'weight': user.weight,
         'date_of_birth': user.date_of_birth.strftime('%Y-%m-%d'),
         'profile_pic': user.profile_pic,
-        'bmi': user.bmi,
+        'bmi': round(user.bmi,2),
         'bmi_category': user.bmi_category,
-        'suggested_calories': user.suggested_calories
+        'suggested_calories': round(user.suggested_calories,2),
+        'activity_level': user.activity_level,
+        'target_weight': user.target_weight,
+        'duration': int(user.duration),
     }
 
     return jsonify(user_profile), 200   
@@ -1154,8 +1247,10 @@ def calories_per_100g(volume_ml, calories):
     return 0
   else:
     return (calories * 100) / volume_ml
-# if __name__ == '__main__':    
-#     with app.app_context():
-#         insert_food_items()
-#         db.create_all()        
-#     app.run(debug=True)
+if __name__ == '__main__':    
+    with app.app_context():
+        # insert_food_items()
+        db.create_all()  
+        print("db created")      
+    app.run(debug=True)
+
