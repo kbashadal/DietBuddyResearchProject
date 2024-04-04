@@ -279,23 +279,35 @@ class RegistrationPageState extends State<RegistrationPage> {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment
-                            .spaceEvenly, // Align to the start of the row
+                            .start, // Align to the start of the row
                         children: [
                           SizedBox(
                             width:
-                                115, // Set the width to a smaller value as needed
+                                140, // Set the width to a smaller value as needed
                             child: DropdownButtonFormField<String>(
                               value: _selectedGender,
-                              items: <String>[
-                                'Male',
-                                'Female',
-                                'Other'
-                              ].map<DropdownMenuItem<String>>((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
+                              items: const <DropdownMenuItem<String>>[
+                                DropdownMenuItem(
+                                  value: 'Male',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.male),
+                                      SizedBox(width: 8),
+                                      Text('Male'),
+                                    ],
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Female',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.female),
+                                      SizedBox(width: 8),
+                                      Text('Female'),
+                                    ],
+                                  ),
+                                ),
+                              ],
                               onChanged: (String? newValue) {
                                 setState(() {
                                   _selectedGender = newValue!;
@@ -311,42 +323,7 @@ class RegistrationPageState extends State<RegistrationPage> {
                           ),
                           const SizedBox(width: 10),
                           SizedBox(
-                            width:
-                                210, // Set the width to a smaller value as needed
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedActivityLevel,
-                              items: <String>[
-                                'Sedentary',
-                                'Lightly Active',
-                                'Moderately Active',
-                                'Very Active'
-                              ].map<DropdownMenuItem<String>>((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedActivityLevel = newValue!;
-                                });
-                              },
-                              decoration: const InputDecoration(
-                                labelText: 'Activity Level',
-                                border: OutlineInputBorder(),
-                                fillColor: Colors.white,
-                                filled: true,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 160, // Adjust the width as needed
+                            width: 90, // Adjust the width as needed
                             child: TextFormField(
                               controller: _heightController,
                               decoration: const InputDecoration(
@@ -360,7 +337,7 @@ class RegistrationPageState extends State<RegistrationPage> {
                           ),
                           const SizedBox(width: 10),
                           SizedBox(
-                            width: 160, // Adjust the width as needed
+                            width: 90, // Adjust the width as needed
                             child: TextFormField(
                               controller: _weightController,
                               decoration: const InputDecoration(
@@ -372,14 +349,73 @@ class RegistrationPageState extends State<RegistrationPage> {
                               keyboardType: TextInputType.number,
                             ),
                           ),
-                          const SizedBox(width: 10),
                         ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedActivityLevel,
+                          items: const <DropdownMenuItem<String>>[
+                            DropdownMenuItem(
+                              value: 'Sedentary',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.airline_seat_recline_extra),
+                                  SizedBox(width: 8),
+                                  Text('Sedentary'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Lightly Active',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.directions_walk),
+                                  SizedBox(width: 8),
+                                  Text('Lightly Active'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Moderately Active',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.directions_run),
+                                  SizedBox(width: 8),
+                                  Text('Moderately Active'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Very Active',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.fitness_center),
+                                  SizedBox(width: 8),
+                                  Text('Very Active'),
+                                ],
+                              ),
+                            ),
+                          ],
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _selectedActivityLevel = newValue!;
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Activity Level',
+                            border: OutlineInputBorder(),
+                            fillColor: Colors.white,
+                            filled: true,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 10),
                     ],
                   ),
                 ),
               ),
+              const SizedBox(height: 10),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
@@ -409,16 +445,17 @@ class RegistrationPageState extends State<RegistrationPage> {
                   ],
                 ),
               ),
+              const SizedBox(height: 10),
               Card(
                 color: Colors.transparent,
                 elevation: 0,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       SizedBox(
-                        width: 100, // Adjusted width for side by side layout
+                        width: 160, // Adjusted width for side by side layout
                         child: TextFormField(
                           controller: _targetWeightController,
                           decoration: const InputDecoration(

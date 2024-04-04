@@ -273,7 +273,7 @@ class MealSummaryPageState extends State<MealSummaryPage> {
             if (snapshot.hasData) {
               return ListTile(
                 title: Text(
-                  'Total Calories: ${getTotalCalories().toStringAsFixed(2)} / ${snapshot.data}',
+                  'Total Calories: ${getTotalCalories().toStringAsFixed(2)} / ${snapshot.data?.toStringAsFixed(2)}',
                   style: theme.textTheme.bodyMedium,
                 ),
               );

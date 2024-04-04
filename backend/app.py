@@ -1122,7 +1122,7 @@ def get_suggested_calories():
     if not user:
         return jsonify({'message': 'User not found.'}), 404
 
-    return jsonify({'email_id': user.email_id, 'suggested_calories': user.suggested_calories}), 200
+    return jsonify({'email_id': user.email_id, 'suggested_calories': round(user.suggested_calories,2)}), 200
 
 
 

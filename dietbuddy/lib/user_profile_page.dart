@@ -4,7 +4,6 @@ import 'package:dietbuddy/view_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -104,17 +103,17 @@ class UserProfilePageState extends State<UserProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'DietBuddy',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.green, // Adjust the color to match your branding
-          ),
+        backgroundColor: Colors.blue[50], // Changed to a more academic color
+        title: Image.asset(
+          'assets/name.png', // Changed asset name for a more academic look
+          width: 150, // Adjusted size for a more refined look
+          height: 150,
+          fit: BoxFit.contain,
         ),
+        centerTitle: true, // Centered the title for a more balanced look
       ),
       body: Container(
-        color: Colors.blue[50],
+        color: Colors.blue[50], // Matching the appBar color for consistency
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
         child: FutureBuilder<Map<String, dynamic>>(
           future: _profileData,
@@ -148,25 +147,35 @@ class UserProfilePageState extends State<UserProfilePage> {
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             children: [
-                              TextFormField(
-                                controller: _fullNameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Full Name',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              TextFormField(
-                                controller: _emailController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Email',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                ),
-                                enabled: false,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _fullNameController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Full Name',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.person_outline),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _emailController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Email',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.email_outlined),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                      ),
+                                      enabled: false,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 10),
                               ListTile(
@@ -186,106 +195,166 @@ class UserProfilePageState extends State<UserProfilePage> {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              TextFormField(
-                                controller: _heightController,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _heightController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Height (cm)',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.straighten),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _weightController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Weight (kg)',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.monitor_weight),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _bmiController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'BMI',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.fitness_center),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                        enabled: false,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _bmiCategoryController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'BMI Category',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.category),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                        enabled: false,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              DropdownButtonFormField<String>(
+                                value: _activityLevelController.text,
+                                items: <String>[
+                                  'Sedentary',
+                                  'Lightly Active',
+                                  'Moderately Active',
+                                  'Very Active'
+                                ].map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _activityLevelController.text = newValue!;
+                                  });
+                                },
                                 decoration: const InputDecoration(
-                                  labelText: 'Height (cm)',
+                                  labelText: 'Activity Level',
                                   border: OutlineInputBorder(),
                                   fillColor: Colors.white,
                                   filled: true,
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              TextFormField(
-                                controller: _weightController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Weight (kg)',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
+                              const SizedBox(height: 20),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.0),
+                                child: Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: Divider(
+                                        color: Colors.grey,
+                                        thickness: 1,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 10),
+                                      child: Text(
+                                        'Goals',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Divider(
+                                        color: Colors.grey,
+                                        thickness: 1,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              TextFormField(
-                                controller: _bmiController,
-                                decoration: const InputDecoration(
-                                  labelText: 'BMI',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                  enabled: false,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              TextFormField(
-                                controller: _bmiCategoryController,
-                                decoration: const InputDecoration(
-                                  labelText: 'BMI Category',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                ),
-                                enabled: false,
-                              ),
-                              const SizedBox(height: 10),
                               TextFormField(
                                 controller: _targetCaloriesController,
                                 decoration: const InputDecoration(
                                   labelText: 'Target Calories',
                                   border: OutlineInputBorder(),
+                                  suffixIcon: Icon(Icons.local_fire_department),
                                   fillColor: Colors.white,
                                   filled: true,
                                 ),
                               ),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                width:
-                                    210, // Set the width to a smaller value as needed
-                                child: DropdownButtonFormField<String>(
-                                  value: _activityLevelController.text,
-                                  items: <String>[
-                                    'Sedentary',
-                                    'Lightly Active',
-                                    'Moderately Active',
-                                    'Very Active'
-                                  ].map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      _activityLevelController.text = newValue!;
-                                    });
-                                  },
-                                  decoration: const InputDecoration(
-                                    labelText: 'Activity Level',
-                                    border: OutlineInputBorder(),
-                                    fillColor: Colors.white,
-                                    filled: true,
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _durationController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Duration (Weeks)',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.calendar_today),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _targetWeightController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Target Weight',
+                                        border: OutlineInputBorder(),
+                                        suffixIcon: Icon(Icons.fitness_center),
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              TextFormField(
-                                controller: _durationController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Duration (Weeks)',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                ),
-                              ),
-                              TextFormField(
-                                controller: _targetWeightController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Target Weight',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                ),
-                              ),
+                              const SizedBox(height: 10),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
