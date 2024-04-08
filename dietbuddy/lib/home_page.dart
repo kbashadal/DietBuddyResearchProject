@@ -1,3 +1,4 @@
+import 'package:dietbuddy/basic_info_page.dart';
 import 'package:dietbuddy/login_page.dart';
 import 'package:dietbuddy/registration_page.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +49,7 @@ class HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const RegistrationPage()),
+                        builder: (context) => const BasicInfoPage()),
                   );
                 },
                 child: const Text('Get Started'),

@@ -26,6 +26,7 @@ class RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _targetWeightController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
   String _selectedActivityLevel = 'Sedentary'; // Default to Sedentary
+  final TextEditingController _ageController = TextEditingController();
 
   @override
   void dispose() {
@@ -37,6 +38,7 @@ class RegistrationPageState extends State<RegistrationPage> {
     _weightController.dispose();
     _targetWeightController.dispose();
     _durationController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
@@ -223,18 +225,32 @@ class RegistrationPageState extends State<RegistrationPage> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      ListTile(
-                        title: const Text('Date of Birth'),
-                        subtitle: Text(
-                          "${_selectedDate.toLocal()}".split(' ')[0],
+                      TextFormField(
+                        controller: _ageController,
+                        decoration: const InputDecoration(
+                          labelText: 'Age',
+                          border: OutlineInputBorder(),
+                          suffixIcon:
+                              Icon(Icons.cake), // Icon changed to cake for age
+                          fillColor: Colors.white,
+                          filled: true,
                         ),
-                        trailing: const Icon(Icons.calendar_today),
-                        onTap: () => _selectDate(context),
-                        shape: RoundedRectangleBorder(
-                          side: const BorderSide(color: Colors.grey, width: 1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                        keyboardType: TextInputType
+                            .number, // Ensure numeric input for age
                       ),
+
+                      // ListTile(
+                      //   title: const Text('Date of Birth'),
+                      //   subtitle: Text(
+                      //     "${_selectedDate.toLocal()}".split(' ')[0],
+                      //   ),
+                      //   trailing: const Icon(Icons.calendar_today),
+                      //   onTap: () => _selectDate(context),
+                      //   shape: RoundedRectangleBorder(
+                      //     side: const BorderSide(color: Colors.grey, width: 1),
+                      //     borderRadius: BorderRadius.circular(4),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),

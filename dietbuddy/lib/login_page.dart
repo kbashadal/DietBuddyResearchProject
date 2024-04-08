@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dietbuddy/basic_info_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/registration_page.dart';
 import 'package:dietbuddy/user_provider.dart';
@@ -179,7 +180,7 @@ class LoginPageState extends State<LoginPage> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const RegistrationPage()));
+                          builder: (context) => const BasicInfoPage()));
                 },
                 child: const Text(
                   'Don\'t have an account? Sign Up',

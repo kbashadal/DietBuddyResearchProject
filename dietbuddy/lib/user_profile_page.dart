@@ -317,7 +317,7 @@ class UserProfilePageState extends State<UserProfilePage> {
                               TextFormField(
                                 controller: _targetCaloriesController,
                                 decoration: const InputDecoration(
-                                  labelText: 'Target Calories',
+                                  labelText: 'Recommended Daily Calories',
                                   border: OutlineInputBorder(),
                                   suffixIcon: Icon(Icons.local_fire_department),
                                   fillColor: Colors.white,

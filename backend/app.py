@@ -112,35 +112,65 @@ class UserAlternateFood(db.Model):
     def __repr__(self):
         return f'<UserAlternateFood {self.user_id} {self.food_item_name}>'
 
+# class User(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     email_id = db.Column(db.String(120), unique=True, nullable=False)
+#     password_hash = db.Column(db.String(128), nullable=False)  # Store the hashed password
+#     full_name = db.Column(db.String(50), nullable=False)
+#     height = db.Column(db.Float, nullable=False)
+#     weight = db.Column(db.Float, nullable=False)
+#     date_of_birth = db.Column(db.Date, nullable=False)
+#     profile_pic = db.Column(db.String(255), nullable=True)  # Add this line for profile picture
+#     bmi = db.Column(db.Float, nullable=True)  # Add this line for BMI
+#     bmi_category = db.Column(db.String(50), nullable=True)  # Add this line for BMI category
+#     suggested_calories = db.Column(db.Float, nullable=True)  # Add this line for suggested calories
+#     duration = db.Column(db.Float, nullable=True)
+#     target_weight = db.Column(db.Float, nullable=True)
+#     activity_level = db.Column(db.String(50), nullable=True)
+#     gender = db.Column(db.String(10), nullable=True)
+
+
+
+
+#     def __repr__(self):
+#         return f'<User {self.email_id}>'
+
+#     def set_password(self, password):
+#         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+#     def check_password(self, password):
+#         return bcrypt.check_password_hash(self.password_hash, password)
+  
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email_id = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)  # Store the hashed password
-    full_name = db.Column(db.String(50), nullable=False)
-    height = db.Column(db.Float, nullable=False)
-    weight = db.Column(db.Float, nullable=False)
-    date_of_birth = db.Column(db.Date, nullable=False)
-    profile_pic = db.Column(db.String(255), nullable=True)  # Add this line for profile picture
-    bmi = db.Column(db.Float, nullable=True)  # Add this line for BMI
-    bmi_category = db.Column(db.String(50), nullable=True)  # Add this line for BMI category
-    suggested_calories = db.Column(db.Float, nullable=True)  # Add this line for suggested calories
-    duration = db.Column(db.Float, nullable=True)
+    full_name = db.Column(db.String(255), nullable=False)
+    email_id = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    gender = db.Column(db.String(50), nullable=False)
+    height = db.Column(db.Float, nullable=False)  # Assuming height is in meters
+    weight = db.Column(db.Float, nullable=False)  # Assuming weight is in kilograms
     target_weight = db.Column(db.Float, nullable=True)
-    activity_level = db.Column(db.String(50), nullable=True)
-    gender = db.Column(db.String(10), nullable=True)
-
-
-
+    selected_activities = db.Column(db.String, nullable=True)  # List of strings for activities
+    selected_activity_level = db.Column(db.String(255), nullable=True)
+    age = db.Column(db.Integer, nullable=False)
+    bmi = db.Column(db.Float, nullable=True)  # Calculated based on height and weight
+    bmi_category = db.Column(db.String(255), nullable=True)  # Determined from the BMI value
+    suggested_calories = db.Column(db.Float, nullable=True)  # To be set based on some external calculation
 
     def __repr__(self):
-        return f'<User {self.email_id}>'
+        return f'<NewUser {self.email}>'
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def check_password(self, password):
-        return bcrypt.check_password_hash(self.password_hash, password)
-   
+        return bcrypt.check_password_hash(self.password_hash, password) 
+
+  
+class Activity(db.Model):
+    __tablename__ = 'activity'
+    id = db.Column(db.Integer, primary_key=True)
+    activity_type = db.Column(db.String(255), nullable=False)
    
 class UserChatHistory(db.Model):
     __tablename__ = 'user_chat_history'
@@ -453,13 +483,14 @@ def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi,
     weight_difference_kg = float(weight_kg) - float(target_weight)
     calories_per_kg = 7700  # Approximate calories per kg of body weight
     total_calories_difference = abs(weight_difference_kg) * calories_per_kg
-    daily_calories_difference = total_calories_difference / (int(targetedDuration) * 7)  # Convert weeks to days
+    print("total_calories_difference",total_calories_difference)
+    # daily_calories_difference = total_calories_difference / (int(targetedDuration) * 7)  # Convert weeks to days
 
     # Adjust the suggested calories intake based on the target weight and duration
     if float(target_weight) < float(weight_kg):
-        suggested_calories = tdee_current - daily_calories_difference  # Creating a deficit to lose weight
+        suggested_calories = tdee_current# - daily_calories_difference  # Creating a deficit to lose weight
     elif float(target_weight) > float(weight_kg):
-        suggested_calories = tdee_current + daily_calories_difference  # Creating a surplus to gain weight
+        suggested_calories = tdee_current #+ daily_calories_difference  # Creating a surplus to gain weight
     else:
         suggested_calories = tdee_current  # Maintain current weight
 
@@ -517,13 +548,74 @@ def update_user_profile():
         print("Exception",e)
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/register_new_user', methods=['POST'])
+def register_new_user():
+    print("register_new_user")
+    data = request.form.to_dict()
+    full_name = data.get('fullName')
+    email = data.get('email')
+    password = data.get('password')
+    gender = data.get('gender')
+    height = data.get('height')
+    
+    weight = data.get('weight')
+    target_weight = data.get('targetWeight')
+    if target_weight=="":
+        target_weight=weight
+    else:
+        target_weight=float(target_weight)
+    print("target_weight",target_weight)
+    selected_activities = data.get('selectedActivities')
+    selected_activity_level = data.get('selectedActivityLevel')
+    age = float(data.get('age'))
+    height_in_meters = float(data['height'])/100
+    bmi = float(data['weight']) / ((float(height_in_meters)) ** 2)
+    bmi_category = determine_bmi_category(bmi)  # Determine the BMI category
+    suggested_calories = calculate_suggested_calories(age=age, gender=gender, weight_kg=weight, height_cm=height, bmi=bmi, activity_level=selected_activity_level, target_weight=target_weight, targetedDuration=0)
+    print("suggested_calories",suggested_calories)
+    print("selected_activities",selected_activities,type(selected_activities))
+    if isinstance(selected_activities, str):
+        selected_activities = selected_activities.strip("[]")
+        selected_activities = selected_activities.split(", ")
+    print("selected_activities", selected_activities, type(selected_activities))
+
+    # Check if user already exists
+    existing_user = User.query.filter_by(email_id=email).first()
+    if existing_user:
+        return jsonify({'error': 'User already exists with this email.'}), 409
+
+    new_user = User(
+        full_name=full_name,
+        email_id=email,
+        gender=gender,
+        height=height,
+        weight=weight,
+        target_weight=target_weight,
+        selected_activities=selected_activities,
+        selected_activity_level=selected_activity_level,
+        age=age,
+        bmi=bmi,
+        bmi_category=bmi_category,
+        suggested_calories=suggested_calories
+    )
+    new_user.set_password(password)
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'message': 'New user registered successfully.'}), 201
+    except Exception as e:
+        print("Exception",e)
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 @app.route('/register', methods=['POST'])
 def register_user():
     # insert_food_items()
     # Access form data (text fields)
     data = request.form.to_dict()
-    height_in_meters = int(data['height'])
-    bmi = float(data['weight']) / ((float(data['height'])*100) ** 2)
+    height_in_meters = int(data['height'])/100
+    bmi = float(data['weight']) / ((float(height_in_meters)) ** 2)
     bmi_category = determine_bmi_category(bmi)  # Determine the BMI category
     activity_level = data['activityLevel']
     date_of_birth = datetime.datetime.strptime(data['dateOfBirth'], '%Y-%m-%d').date()
@@ -1124,6 +1216,11 @@ def get_suggested_calories():
 
     return jsonify({'email_id': user.email_id, 'suggested_calories': round(user.suggested_calories,2)}), 200
 
+@app.route('/fetch_all_exercises', methods=['GET'])
+def fetch_all_exercises():
+    exercises = Exercise.query.all()
+    exercises_list = [{'id': exercise.id, 'workout_type': exercise.workout_type} for exercise in exercises]
+    return jsonify(exercises_list), 200
 
 
 
@@ -1229,7 +1326,37 @@ def insert_food_items():
     print()  
     db.session.commit()
     
+def insert_activities():
+    unique_activities = set()
+    with open('archive-4/Activity_Dataset_V1.csv', mode='r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            workout_type = row['workout_type'].lower().replace(' ', '')
+            if workout_type not in unique_activities:
+                unique_activities.add(workout_type)
+                new_activity = Activity(activity_type=workout_type)
+                db.session.add(new_activity)
+    db.session.commit()
+@app.route('/fetch_suggested_calories', methods=['GET'])
+def fetch_suggested_calories():
+    age = float(request.args.get('age'))
+    gender = request.args.get('gender')
+    weight_kg = request.args.get('weight_kg')
+    height_cm = request.args.get('height_cm')
+    activity_level = request.args.get('activity_level')
+    target_weight = (request.args.get('target_weight'))
+    print("target_weight",target_weight)
+    if target_weight == "":
+        target_weight = weight_kg
+    print("target_weight",target_weight)
+    print("fetching suggested calories")
+    bmi = float(weight_kg) / ((float(height_cm)/100) ** 2)
+    bmi_category = determine_bmi_category(bmi)  # Determine the BMI category
+    suggested_calories = calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi, activity_level, target_weight,targetedDuration=0)
+    print("suggested_calories",suggested_calories)
+    return jsonify({'suggested_calories': suggested_calories}), 200
     
+
 def calories_per_100g(volume_ml, calories):
   """
   This function calculates the calories per 100 grams of a food item,
@@ -1249,8 +1376,9 @@ def calories_per_100g(volume_ml, calories):
     return (calories * 100) / volume_ml
 if __name__ == '__main__':    
     with app.app_context():
-        # insert_food_items()
+        # insert_food_items()   
         db.create_all()  
+        # insert_activities()
         print("db created")      
     app.run(debug=True)
 
