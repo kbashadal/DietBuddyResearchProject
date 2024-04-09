@@ -558,12 +558,9 @@ def register_new_user():
     if isinstance(selected_activities, str):
         selected_activities = selected_activities.strip("[]")
         selected_activities = selected_activities.split(", ")
-    print("selected_activities", selected_activities, type(selected_activities))
-
-    # Check if user already exists
     existing_user = User.query.filter_by(email_id=email).first()
     if existing_user:
-        return jsonify({'error': 'User already exists with this email.'}), 409
+        return jsonify({'message': 'User already exists with this email.'}), 409
 
     new_user = User(
         full_name=full_name,
@@ -585,10 +582,10 @@ def register_new_user():
         db.session.add(new_user)
         db.session.commit()
         return jsonify({'message': 'New user registered successfully.'}), 201
-    except Exception as e:
-        print("Exception",e)
+    except IntegrityError:
+        print("Exception")
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'message': 'This email is already registered.'}), 409
 @app.route('/register', methods=['POST'])
 def register_user():
     # insert_food_items()
