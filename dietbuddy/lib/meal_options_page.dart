@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dietbuddy/add_entry_page.dart';
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
+import 'package:dietbuddy/udpate_select_activity.dart';
 import 'package:dietbuddy/user_profile_page.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:dietbuddy/view_history_page.dart';
@@ -165,6 +166,23 @@ class MealOptionsPageState extends State<MealOptionsPage> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const UserProfilePage()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.fitness_center,
+                        color: Theme.of(context).primaryColor),
+                    title: Text('Update Activity',
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).textTheme.bodyLarge?.color)),
+                    onTap: () {
+                      Navigator.pop(context); // Close the modal
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const UpdateActivitySelectionPage()),
                       );
                     },
                   ),

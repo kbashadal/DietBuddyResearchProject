@@ -85,13 +85,13 @@ class UserProfilePageState extends State<UserProfilePage> {
   Future<Map<String, dynamic>> _fetchUserProfile() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.email;
-    // final response = await http.get(
-    //   Uri.parse(
-    //       'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=$userEmail'),
-    // );
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:5000/user_profile?email_id=$userEmail'),
+      Uri.parse(
+          'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=$userEmail'),
     );
+    // final response = await http.get(
+    //   Uri.parse('http://127.0.0.1:5000/user_profile?email_id=$userEmail'),
+    // );
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
@@ -498,8 +498,10 @@ class UserProfilePageState extends State<UserProfilePage> {
     final userTargetWeight = (_targetWeightController.text);
     final userBMI = (_bmiController.text);
     final userBMIcategory = (_bmiCategoryController.text);
+    // const api =
+    //     'http://127.0.0.1:5000/update_user_profile'; // Replace with your actual API URL
     const api =
-        'http://127.0.0.1:5000/update_user_profile'; // Replace with your actual API URL
+        'https://dietbuddyresearchproject.onrender.com/update_user_profile';
     final body = jsonEncode({
       'emailId': userEmail,
       'fullName': userFullName,

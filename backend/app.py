@@ -1170,6 +1170,15 @@ def get_user_profile():
     user = User.query.filter_by(email_id=email_id).first()
     if not user:
         return jsonify({'message': 'User not found.'}), 404
+    activities = user.selected_activities
+    if isinstance(activities, str):
+        if '{' in activities:
+            activities = activities.strip("{}")
+        if '[' in activities:
+            activities = activities.strip("[]")        
+        activities = activities.split(",")
+        activities = [activity.replace('"', '') for activity in activities]
+    
 
     user_profile = {
         'email_id': user.email_id,
@@ -1185,6 +1194,7 @@ def get_user_profile():
         'target_weight': user.target_weight,
         'age': user.age,
         'gender': user.gender,
+        'selected_activities': activities,
         # 'duration': int(user.duration),
     }
 
@@ -1403,6 +1413,28 @@ def calories_per_100g(volume_ml, calories):
     return 0
   else:
     return (calories * 100) / volume_ml
+@app.route('/update_activities', methods=['POST'])
+def update_activities():
+    data = request.get_json()
+    email_id = data.get('email_id')
+    new_activities = data.get('activities')
+
+    if not email_id or not new_activities:
+        return jsonify({'error': 'Missing email_id or activities parameter'}), 400
+
+    user = User.query.filter_by(email_id=email_id).first()
+    if not user:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Assuming activities are stored as a string of comma-separated values
+    user.selected_activities = new_activities
+
+    try:
+        db.session.commit()
+        return jsonify({'message': 'Activities updated successfully.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 if __name__ == '__main__':    
     with app.app_context():
         # insert_food_items()   
