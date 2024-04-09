@@ -599,7 +599,6 @@ def register_user():
     today = datetime.datetime.today().date()
     age = today.year - date_of_birth.year - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
     target_weight = float(data['targetWeight'])
-    duration = int(data['duration'])
     gender = data['gender']
     
     
@@ -624,7 +623,7 @@ def register_user():
                         height=data['height'], weight=data['weight'], date_of_birth=data['dateOfBirth'],
                         profile_pic=profile_pic_path, bmi=bmi, bmi_category=bmi_category,
                         suggested_calories=suggested_calories,activity_level=activity_level,
-                        target_weight=target_weight,duration=duration,gender=gender)
+                        target_weight=target_weight,gender=gender)
         new_user.set_password(data['password'])  # Set the hashed password
         db.session.add(new_user)
         db.session.commit()
