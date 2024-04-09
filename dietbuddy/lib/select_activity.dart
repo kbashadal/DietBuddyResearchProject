@@ -42,8 +42,10 @@ class SelectActivityPageState extends State<SelectActivityPage> {
   /// Fetches activities from the server.
   Future<void> _fetchActivities() async {
     try {
-      final response = await http
-          .get(Uri.parse('http://127.0.0.1:5000/fetch_all_exercises'));
+      // final response = await http
+      //     .get(Uri.parse('http://127.0.0.1:5000/fetch_all_exercises'));
+      final response = await http.get(Uri.parse(
+          'https://dietbuddyresearchproject.onrender.com/fetch_all_exercises'));
       if (response.statusCode == 200) {
         setState(() {
           activities = List<String>.from(

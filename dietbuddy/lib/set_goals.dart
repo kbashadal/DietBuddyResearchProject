@@ -45,8 +45,10 @@ class SetGoalsPageState extends State<SetGoalsPage> {
   }
 
   void _fetchSuggestedCalories() async {
+    // final response = await http.get(Uri.parse(
+    //     'https://dietbuddyresearchproject.onrender.com/fetch_suggested_calories?age=${widget.age}&gender=${widget.gender}&weight_kg=${widget.weight}&height_cm=${widget.height}&activity_level=${widget.selectedActivityLevel}&target_weight=${_targetWeightController.text}'));
     final response = await http.get(Uri.parse(
-        'http://127.0.0.1:5000/fetch_suggested_calories?age=${widget.age}&gender=${widget.gender}&weight_kg=${widget.weight}&height_cm=${widget.height}&activity_level=${widget.selectedActivityLevel}&target_weight=${_targetWeightController.text}'));
+        'https://dietbuddyresearchproject.onrender.com/fetch_suggested_calories?age=${widget.age}&gender=${widget.gender}&weight_kg=${widget.weight}&height_cm=${widget.height}&activity_level=${widget.selectedActivityLevel}&target_weight=${_targetWeightController.text}'));
 
     final jsonData = json.decode(response.body);
     setState(() {
@@ -56,8 +58,10 @@ class SetGoalsPageState extends State<SetGoalsPage> {
   }
 
   void _onUpdateSuggestedCalories() async {
+    // final response = await http.get(Uri.parse(
+    //     'http://127.0.0.1:5000/fetch_suggested_calories?age=${widget.age}&gender=${widget.gender}&weight_kg=${_targetWeightController.text}&height_cm=${widget.height}&activity_level=${widget.selectedActivityLevel}&target_weight=${_targetWeightController.text}'));
     final response = await http.get(Uri.parse(
-        'http://127.0.0.1:5000/fetch_suggested_calories?age=${widget.age}&gender=${widget.gender}&weight_kg=${_targetWeightController.text}&height_cm=${widget.height}&activity_level=${widget.selectedActivityLevel}&target_weight=${_targetWeightController.text}'));
+        'https://dietbuddyresearchproject.onrender.com/fetch_suggested_calories?age=${widget.age}&gender=${widget.gender}&weight_kg=${_targetWeightController.text}&height_cm=${widget.height}&activity_level=${widget.selectedActivityLevel}&target_weight=${_targetWeightController.text}'));
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
       setState(() {
@@ -213,7 +217,9 @@ class SetGoalsPageState extends State<SetGoalsPage> {
   }
 
   Future<void> _registerUser() async {
-    const url = 'http://127.0.0.1:5000/register_new_user';
+    // const url = 'http://127.0.0.1:5000/register_new_user';
+    const url =
+        'https://dietbuddyresearchproject.onrender.com/register_new_user';
     final Uri uri = Uri.parse(url);
     var request = http.MultipartRequest('POST', uri)
       ..fields['fullName'] = widget.fullName

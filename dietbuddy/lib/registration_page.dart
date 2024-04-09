@@ -43,8 +43,8 @@ class RegistrationPageState extends State<RegistrationPage> {
   }
 
   Future<void> registerUser(BuildContext context) async {
-    const url = 'http://127.0.0.1:5000/register';
-    // const url = 'https://dietbuddyresearchproject.onrender.com/register';
+    // const url = 'http://127.0.0.1:5000/register';
+    const url = 'https://dietbuddyresearchproject.onrender.com/register';
 
     final Uri uri = Uri.parse(url);
 

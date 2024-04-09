@@ -1334,6 +1334,49 @@ def fetch_suggested_calories_without_email():
     suggested_calories = calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi, activity_level, target_weight,targetedDuration=0)
     print("suggested_calories",suggested_calories)
     return jsonify({'suggested_calories': suggested_calories}), 200
+
+@app.route('/suggestExerciseWithDiffModel', methods=['POST'])
+def suggestExerciseWithDiffModel():
+    data = request.get_json()
+    calories = float(data['dailyCalorieLimit'])
+    userEmailNonNull = data['email']
+    print("userEmailNonNull",userEmailNonNull)
+    user = User.query.filter_by(email_id=userEmailNonNull).first()
+    if user:
+        selected_activities = user.selected_activities
+    else:
+        selected_activities = []
+    
+    selected_activities_list = selected_activities.strip("{}").split(",")
+    print("selected_activities_list",selected_activities_list)
+    predictions = load_model_and_predict(calories, selected_activities_list)
+    print("predictions",predictions)
+    return jsonify({"top_3_exercises_with_time":predictions}), 200
+def load_model_and_predict(calories, exercise_types):
+        
+    predictions = {}
+    top_3_exercises_with_time = []
+    
+    for exercise in exercise_types:
+        exercise = exercise.replace('"', '')
+        # Generate the filename from the exercise type
+        model_filename = f'model_{exercise.replace(" ", "_")}.pkl'
+        print("model_filename",model_filename)
+        print("_____________________________")
+        try:
+            # Load the model from the pickle file
+            model = joblib.load(model_filename)
+        except FileNotFoundError:
+            print(f"Model file {model_filename} not found. Skipping...")
+            continue
+        
+        # Predict duration for the given calorie target
+        input_df = pd.DataFrame([[calories]], columns=['calories'])
+        predicted_duration = model.predict(input_df)
+        predictions[exercise] = round(predicted_duration[0], 2)
+        top_3_exercises_with_time.append({'exercise': exercise, 'time': round(predicted_duration[0], 2)})
+    
+    return top_3_exercises_with_time
     
 
 def calories_per_100g(volume_ml, calories):

@@ -27,8 +27,8 @@ class LoginPageState extends State<LoginPage> {
   }
 
   Future<void> loginUser() async {
-    // const url = 'https://dietbuddyresearchproject.onrender.com/login';
-    const url = 'http://127.0.0.1:5000/login';
+    const url = 'https://dietbuddyresearchproject.onrender.com/login';
+    // const url = 'http://127.0.0.1:5000/login';
 
     final Map<String, dynamic> loginData = {
       'email': _emailController.text,
