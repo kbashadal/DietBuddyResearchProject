@@ -63,8 +63,9 @@ class MealSummaryPageState extends State<MealSummaryPage> {
   }
 
   Future<void> _fetchMealDataSummary() async {
-    const url =
-        'https://dietbuddyresearchproject.onrender.com/user_meals_summary_by_email';
+    // const url =
+    //     'https://dietbuddyresearchproject.onrender.com/user_meals_summary_by_email';
+    const url = 'http://127.0.0.1:5000/user_meals_summary_by_email';
     try {
       final response = await http.get(
         Uri.parse('$url?email_id=${widget.email}'),
@@ -414,8 +415,10 @@ class MealSummaryPageState extends State<MealSummaryPage> {
     // Implement the logic to fetch the suggested calories limit
     // This is a placeholder for actual implementation
     final email = widget.email; // Assuming widget.email holds the user's email
+    // final url = Uri.parse(
+    //     'https://dietbuddyresearchproject.onrender.com/get_suggested_calories?email_id=$email');
     final url = Uri.parse(
-        'https://dietbuddyresearchproject.onrender.com/get_suggested_calories?email_id=$email');
+        'http://127.0.0.1:5000/get_suggested_calories?email_id=$email');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

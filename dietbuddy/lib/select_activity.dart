@@ -1,9 +1,10 @@
 import 'dart:convert';
-
 import 'package:dietbuddy/select_activty_level.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+/// SelectActivityPage allows users to select their preferred activities.
 class SelectActivityPage extends StatefulWidget {
   final int age;
   final String gender;
@@ -13,45 +14,53 @@ class SelectActivityPage extends StatefulWidget {
   final String email;
   final String password;
 
-  const SelectActivityPage(
-      {super.key,
-      required this.age,
-      required this.gender,
-      required this.height,
-      required this.weight,
-      required this.fullName,
-      required this.email,
-      required this.password});
+  const SelectActivityPage({
+    super.key,
+    required this.age,
+    required this.gender,
+    required this.height,
+    required this.weight,
+    required this.fullName,
+    required this.email,
+    required this.password,
+  });
 
   @override
-  _SelectActivityPageState createState() => _SelectActivityPageState();
+  SelectActivityPageState createState() => SelectActivityPageState();
 }
 
-class _SelectActivityPageState extends State<SelectActivityPage> {
+class SelectActivityPageState extends State<SelectActivityPage> {
   List<String> activities = [];
+  final List<String> _selectedActivities = [];
 
   @override
   void initState() {
     super.initState();
-    fetchActivities();
+    _fetchActivities();
   }
 
-  void fetchActivities() async {
-    final response =
-        await http.get(Uri.parse('http://127.0.0.1:5000/fetch_all_exercises'));
-    if (response.statusCode == 200) {
-      setState(() {
-        activities = List<String>.from(
-            json.decode(response.body).map((data) => data['workout_type']));
-      });
-    } else {
-      throw Exception('Failed to load activities');
+  /// Fetches activities from the server.
+  Future<void> _fetchActivities() async {
+    try {
+      final response = await http
+          .get(Uri.parse('http://127.0.0.1:5000/fetch_all_exercises'));
+      if (response.statusCode == 200) {
+        setState(() {
+          activities = List<String>.from(
+              json.decode(response.body).map((data) => data['workout_type']));
+        });
+      } else {
+        throw Exception('Failed to load activities');
+      }
+    } catch (e) {
+      // Handle exceptions by showing a dialog or a snackbar
+      if (kDebugMode) {
+        print('Error fetching activities: $e');
+      } // Consider replacing with a user-friendly error handling
     }
   }
 
-  // Track selected activities
-  final List<String> _selectedActivities = [];
-
+  /// Toggles the selection state of an activity.
   void _toggleActivity(String value) {
     setState(() {
       if (_selectedActivities.contains(value)) {
@@ -66,14 +75,14 @@ class _SelectActivityPageState extends State<SelectActivityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[50], // Changed to a more academic color
+        backgroundColor: Colors.blue.shade50,
         title: Image.asset(
-          'assets/name.png', // Changed asset name for a more academic look
-          width: 150, // Adjusted size for a more refined look
+          'assets/name.png',
+          width: 150,
           height: 150,
           fit: BoxFit.contain,
         ),
-        centerTitle: true, // Centered the title for a more balanced look
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -82,51 +91,46 @@ class _SelectActivityPageState extends State<SelectActivityPage> {
               padding: EdgeInsets.all(8.0),
               child: Text(
                 'Select Activities',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
             ),
             const Divider(
-              thickness: 2,
-              indent: 20,
-              endIndent: 20,
-              color: Colors.grey,
-            ),
-            ...activities.map((activity) {
-              return CheckboxListTile(
-                title: Text(activity),
-                value: _selectedActivities.contains(activity),
-                onChanged: (bool? selected) {
-                  _toggleActivity(activity);
-                },
-              );
-            }).toList(),
+                thickness: 2, indent: 20, endIndent: 20, color: Colors.grey),
+            ...activities
+                .map((activity) => CheckboxListTile(
+                      title: Text(activity),
+                      value: _selectedActivities.contains(activity),
+                      onChanged: (bool? selected) {
+                        _toggleActivity(activity);
+                      },
+                    ))
+                .toList(),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SelectActivityLevelPage(
-                      fullName: widget.fullName,
-                      email: widget.email,
-                      password: widget.password,
-                      age: widget.age,
-                      gender: widget.gender,
-                      height: widget.height,
-                      weight: widget.weight,
-                      selectedActivities:
-                          _selectedActivities, // Pass the selected activities
-                    ),
-                  ),
-                );
-              },
+              onPressed: () => _navigateToNextPage(context),
               child: const Text('Next'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Navigates to the SelectActivityLevelPage, passing the necessary parameters.
+  void _navigateToNextPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectActivityLevelPage(
+          fullName: widget.fullName,
+          email: widget.email,
+          password: widget.password,
+          age: widget.age,
+          gender: widget.gender,
+          height: widget.height,
+          weight: widget.weight,
+          selectedActivities: _selectedActivities,
         ),
       ),
     );

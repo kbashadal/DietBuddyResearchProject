@@ -25,9 +25,13 @@ class MealOptionsPageState extends State<MealOptionsPage> {
       String mealType) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.email;
+    // final response = await http.get(
+    //   Uri.parse(
+    //       'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_and_type?meal_type=$mealType&email_id=$userEmail'),
+    // );
     final response = await http.get(
       Uri.parse(
-          'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_and_type?meal_type=$mealType&email_id=$userEmail'),
+          'http://127.0.0.1:5000/total_calories_by_email_and_type?meal_type=$mealType&email_id=$userEmail'),
     );
 
     if (response.statusCode == 200) {

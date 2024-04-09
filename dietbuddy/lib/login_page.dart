@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:dietbuddy/basic_info_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
-import 'package:dietbuddy/registration_page.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +27,9 @@ class LoginPageState extends State<LoginPage> {
   }
 
   Future<void> loginUser() async {
-    const url = 'https://dietbuddyresearchproject.onrender.com/login';
+    // const url = 'https://dietbuddyresearchproject.onrender.com/login';
+    const url = 'http://127.0.0.1:5000/login';
+
     final Map<String, dynamic> loginData = {
       'email': _emailController.text,
       'password': _passwordController.text,

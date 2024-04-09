@@ -1,6 +1,5 @@
 import 'package:dietbuddy/basic_info_page.dart';
 import 'package:dietbuddy/login_page.dart';
-import 'package:dietbuddy/registration_page.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {

@@ -171,8 +171,10 @@ class AddEntryPageState extends State<AddEntryPage> {
   }
 
   Future<double> fetchSuggestedCaloriesLimit() async {
+    // final profileUrl = Uri.parse(
+    //     'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=${Provider.of<UserProvider>(context, listen: false).email}');
     final profileUrl = Uri.parse(
-        'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=${Provider.of<UserProvider>(context, listen: false).email}');
+        'http://127.0.0.1:5000/user_profile?email_id=${Provider.of<UserProvider>(context, listen: false).email}');
     final profileResponse = await http.get(profileUrl);
     if (profileResponse.statusCode == 200) {
       final profileData = json.decode(profileResponse.body);
@@ -226,7 +228,8 @@ class AddEntryPageState extends State<AddEntryPage> {
         'Volume (ml)': volumeInput,
         'Caffeine (mg)': caffeineInput,
       };
-      endpoint = 'https://dietbuddyresearchproject.onrender.com/predictdrink';
+      // endpoint = 'https://dietbuddyresearchproject.onrender.com/predictdrink';
+      endpoint = 'http://127.0.0.1:5000/predictdrink';
     } else {
       // Use weight field instead
       dataToSend = {
@@ -234,14 +237,19 @@ class AddEntryPageState extends State<AddEntryPage> {
         'selectedCategory': selectedCategory,
         'per100grams': per100gramsInput,
       };
-      endpoint =
-          'https://dietbuddyresearchproject.onrender.com/predictNonDrink';
+      // endpoint =
+      //     'https://dietbuddyresearchproject.onrender.com/predictNonDrink';
+      endpoint = 'http://127.0.0.1:5000/predictNonDrink';
     }
     // check for total calories intake per day if exceeds limit show a option to choose from exercise, alternate food, open api chatbot
     final currentDate =
         DateTime.now().toString().split(' ')[0]; // Format: YYYY-MM-DD
+    // final totalCaloriesUrl = Uri.parse(
+    //     'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
+    // final totalCaloriesUrl = Uri.parse(
+    //     'http://127.0.0.1:5000/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
     final totalCaloriesUrl = Uri.parse(
-        'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
+        'http://127.0.0.1:5000/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
     final totalCaloriesResponse = await http.get(totalCaloriesUrl);
 
     if (totalCaloriesResponse.statusCode == 200) {
@@ -279,8 +287,9 @@ class AddEntryPageState extends State<AddEntryPage> {
       final Map<String, dynamic> userMealData;
 
       // After getting the prediction, add the user meal to the database
-      final addMealUrl = Uri.parse(
-          'https://dietbuddyresearchproject.onrender.com/add_user_meals');
+      // final addMealUrl = Uri.parse(
+      // 'https://dietbuddyresearchproject.onrender.com/add_user_meals');
+      final addMealUrl = Uri.parse('http://127.0.0.1:5000/add_user_meals');
       if (isVolumeAndCaffeineCategory) {
         userMealData = {
           'user_email': userEmail,
@@ -334,9 +343,11 @@ class AddEntryPageState extends State<AddEntryPage> {
         Provider.of<UserProvider>(context, listen: false).email!;
     final response = await http.post(
       Uri.parse(
-          'https://dietbuddyresearchproject.onrender.com/suggestExerciseWithTime'),
+          // 'https://dietbuddyresearchproject.onrender.com/suggestExerciseWithTime'),
+          'http://127.0.0.1:5000/suggestExercise'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'dailyCalorieLimit': dailyCalorieLimit}),
+      body: json.encode(
+          {'dailyCalorieLimit': dailyCalorieLimit, 'email': userEmailNonNull}),
     );
 
     if (response.statusCode == 200) {
@@ -432,7 +443,8 @@ class AddEntryPageState extends State<AddEntryPage> {
 
     final response = await http.post(
       Uri.parse(
-          'https://dietbuddyresearchproject.onrender.com/suggestExercise'),
+          // 'https://dietbuddyresearchproject.onrender.com/suggestExercise'),
+          'http://127.0.0.1:5000/suggestExercise'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'dailyCalorieLimit': dailyCalorieLimit}),
     );
@@ -543,8 +555,10 @@ class AddEntryPageState extends State<AddEntryPage> {
     final userEmail = Provider.of<UserProvider>(context, listen: false).email;
     final currentDate =
         DateTime.now().toString().split(' ')[0]; // Format: YYYY-MM-DD
+    // final totalCaloriesUrl = Uri.parse(
+    //     'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
     final totalCaloriesUrl = Uri.parse(
-        'https://dietbuddyresearchproject.onrender.com/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
+        'http://127.0.0.1:5000/total_calories_by_email_per_day?email_id=$userEmail&date=$currentDate');
     final totalCaloriesResponse = await http.get(totalCaloriesUrl);
 
     if (totalCaloriesResponse.statusCode == 200) {
@@ -613,8 +627,10 @@ class AddEntryPageState extends State<AddEntryPage> {
   }
 
   Future<void> fetchCategories() async {
-    final response = await http.get(Uri.parse(
-        'https://dietbuddyresearchproject.onrender.com/food_categories'));
+    // final response = await http.get(Uri.parse(
+    //     'https://dietbuddyresearchproject.onrender.com/food_categories'));
+    final response =
+        await http.get(Uri.parse('http://127.0.0.1:5000/food_categories'));
     if (response.statusCode == 200) {
       final List<dynamic> fetchedCategories = jsonDecode(response.body);
       setState(() {

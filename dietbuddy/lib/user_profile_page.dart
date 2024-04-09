@@ -1,6 +1,7 @@
 import 'package:dietbuddy/interventions_summary_page.dart';
 import 'package:dietbuddy/meal_summary_page.dart';
 import 'package:dietbuddy/view_history_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dietbuddy/user_provider.dart';
 import 'package:flutter/services.dart';
@@ -530,12 +531,18 @@ class UserProfilePageState extends State<UserProfilePage> {
         setState(() {
           _profileData = _fetchUserProfile();
         });
-        print('User profile updated successfully');
+        if (kDebugMode) {
+          print('User profile updated successfully');
+        }
       } else {
-        print('Failed to update user profile');
+        if (kDebugMode) {
+          print('Failed to update user profile');
+        }
       }
     }).catchError((error) {
-      print('Error updating user profile: $error');
+      if (kDebugMode) {
+        print('Error updating user profile: $error');
+      }
     });
   }
 }

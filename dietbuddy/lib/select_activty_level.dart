@@ -23,10 +23,10 @@ class SelectActivityLevelPage extends StatefulWidget {
       required this.selectedActivities});
 
   @override
-  _SelectActivityLevelState createState() => _SelectActivityLevelState();
+  SelectActivityLevelState createState() => SelectActivityLevelState();
 }
 
-class _SelectActivityLevelState extends State<SelectActivityLevelPage> {
+class SelectActivityLevelState extends State<SelectActivityLevelPage> {
   String? _selectedActivityLevel;
 
   void _setSelectedActivityLevel(String value) {

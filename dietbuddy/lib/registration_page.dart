@@ -20,7 +20,7 @@ class RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   String _selectedGender = 'Male'; // Defa
-  DateTime _selectedDate = DateTime.now();
+  final DateTime _selectedDate = DateTime.now();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _targetWeightController = TextEditingController();
@@ -115,20 +115,6 @@ class RegistrationPageState extends State<RegistrationPage> {
           SnackBar(content: Text(e.toString())),
         );
       }
-    }
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate, // from your existing code
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
     }
   }
 

@@ -112,61 +112,41 @@ class UserAlternateFood(db.Model):
     def __repr__(self):
         return f'<UserAlternateFood {self.user_id} {self.food_item_name}>'
 
-# class User(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     email_id = db.Column(db.String(120), unique=True, nullable=False)
-#     password_hash = db.Column(db.String(128), nullable=False)  # Store the hashed password
-#     full_name = db.Column(db.String(50), nullable=False)
-#     height = db.Column(db.Float, nullable=False)
-#     weight = db.Column(db.Float, nullable=False)
-#     date_of_birth = db.Column(db.Date, nullable=False)
-#     profile_pic = db.Column(db.String(255), nullable=True)  # Add this line for profile picture
-#     bmi = db.Column(db.Float, nullable=True)  # Add this line for BMI
-#     bmi_category = db.Column(db.String(50), nullable=True)  # Add this line for BMI category
-#     suggested_calories = db.Column(db.Float, nullable=True)  # Add this line for suggested calories
-#     duration = db.Column(db.Float, nullable=True)
-#     target_weight = db.Column(db.Float, nullable=True)
-#     activity_level = db.Column(db.String(50), nullable=True)
-#     gender = db.Column(db.String(10), nullable=True)
-
-
-
-
-#     def __repr__(self):
-#         return f'<User {self.email_id}>'
-
-#     def set_password(self, password):
-#         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-
-#     def check_password(self, password):
-#         return bcrypt.check_password_hash(self.password_hash, password)
-  
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(255), nullable=False)
-    email_id = db.Column(db.String(255), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    gender = db.Column(db.String(50), nullable=False)
-    height = db.Column(db.Float, nullable=False)  # Assuming height is in meters
-    weight = db.Column(db.Float, nullable=False)  # Assuming weight is in kilograms
+    email_id = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)  # Store the hashed password
+    full_name = db.Column(db.String(50), nullable=False)
+    height = db.Column(db.Float, nullable=False)
+    weight = db.Column(db.Float, nullable=False)
+    profile_pic = db.Column(db.String(255), nullable=True)  # Add this line for profile picture
+    bmi = db.Column(db.Float, nullable=True)  # Add this line for BMI
+    bmi_category = db.Column(db.String(50), nullable=True)  # Add this line for BMI category
+    suggested_calories = db.Column(db.Float, nullable=True)  # Add this line for suggested calories
+    duration = db.Column(db.Float, nullable=True)
     target_weight = db.Column(db.Float, nullable=True)
+    activity_level = db.Column(db.String(50), nullable=True)
+    gender = db.Column(db.String(10), nullable=True)
+    
+    
     selected_activities = db.Column(db.String, nullable=True)  # List of strings for activities
-    selected_activity_level = db.Column(db.String(255), nullable=True)
     age = db.Column(db.Integer, nullable=False)
-    bmi = db.Column(db.Float, nullable=True)  # Calculated based on height and weight
-    bmi_category = db.Column(db.String(255), nullable=True)  # Determined from the BMI value
-    suggested_calories = db.Column(db.Float, nullable=True)  # To be set based on some external calculation
+    
+
+
+
+
 
     def __repr__(self):
-        return f'<NewUser {self.email}>'
+        return f'<User {self.email_id}>'
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def check_password(self, password):
-        return bcrypt.check_password_hash(self.password_hash, password) 
-
+        return bcrypt.check_password_hash(self.password_hash, password)
   
+
 class Activity(db.Model):
     __tablename__ = 'activity'
     id = db.Column(db.Integer, primary_key=True)
@@ -593,7 +573,7 @@ def register_new_user():
         weight=weight,
         target_weight=target_weight,
         selected_activities=selected_activities,
-        selected_activity_level=selected_activity_level,
+        activity_level=selected_activity_level,        
         age=age,
         bmi=bmi,
         bmi_category=bmi_category,
@@ -704,7 +684,6 @@ def add_user_meals():
         predicted_calories = model.predict(input_df)[0]     
         print("predicted_calories",predicted_calories)
         user = User.query.filter_by(email_id=user_email).first()
-        print("user",user,"user.id",user.id)
         food_item = FoodItems.query.filter_by(FoodItemName=food_item_name).first()
         print("food_item",food_item,"food_item.id",food_item.id)
         meal_type = MealType.query.filter_by(name=meal_type_name).first()
@@ -1192,14 +1171,14 @@ def get_user_profile():
         'full_name': user.full_name,
         'height': user.height,
         'weight': user.weight,
-        'date_of_birth': user.date_of_birth.strftime('%Y-%m-%d'),
+        # 'date_of_birth': user.date_of_birth.strftime('%Y-%m-%d'),
         'profile_pic': user.profile_pic,
         'bmi': round(user.bmi,2),
         'bmi_category': user.bmi_category,
         'suggested_calories': round(user.suggested_calories,2),
         'activity_level': user.activity_level,
         'target_weight': user.target_weight,
-        'duration': int(user.duration),
+        # 'duration': int(user.duration),
     }
 
     return jsonify(user_profile), 200   
@@ -1338,7 +1317,7 @@ def insert_activities():
                 db.session.add(new_activity)
     db.session.commit()
 @app.route('/fetch_suggested_calories', methods=['GET'])
-def fetch_suggested_calories():
+def fetch_suggested_calories_without_email():
     age = float(request.args.get('age'))
     gender = request.args.get('gender')
     weight_kg = request.args.get('weight_kg')

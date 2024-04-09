@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dietbuddy/login_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -28,10 +29,10 @@ class SetGoalsPage extends StatefulWidget {
       required this.password});
 
   @override
-  _SetGoalsPageState createState() => _SetGoalsPageState();
+  SetGoalsPageState createState() => SetGoalsPageState();
 }
 
-class _SetGoalsPageState extends State<SetGoalsPage> {
+class SetGoalsPageState extends State<SetGoalsPage> {
   final TextEditingController _targetWeightController = TextEditingController();
   final TextEditingController _suggestedCaloriesController =
       TextEditingController();
@@ -44,23 +45,14 @@ class _SetGoalsPageState extends State<SetGoalsPage> {
   }
 
   void _fetchSuggestedCalories() async {
-    print("fetching suggested calories");
-    print(widget.age);
-    print(widget.gender);
-    print(widget.height);
-    print(widget.weight);
-    print(widget.selectedActivities);
-    print(widget.selectedActivityLevel);
     final response = await http.get(Uri.parse(
         'http://127.0.0.1:5000/fetch_suggested_calories?age=${widget.age}&gender=${widget.gender}&weight_kg=${widget.weight}&height_cm=${widget.height}&activity_level=${widget.selectedActivityLevel}&target_weight=${_targetWeightController.text}'));
-    print(response.body);
+
     final jsonData = json.decode(response.body);
     setState(() {
       _suggestedCaloriesController.text = jsonData['suggested_calories']
           .toString(); // Assuming 'suggested_calories' is the key in your JSON data
     });
-
-    print(jsonData);
   }
 
   void _onUpdateSuggestedCalories() async {
@@ -73,7 +65,9 @@ class _SetGoalsPageState extends State<SetGoalsPage> {
             jsonData['suggested_calories'].toString();
       });
     } else {
-      print('Failed to fetch suggested calories');
+      if (kDebugMode) {
+        print('Failed to fetch suggested calories');
+      }
     }
   }
 
@@ -272,7 +266,9 @@ class _SetGoalsPageState extends State<SetGoalsPage> {
         }
       });
     } catch (e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
     }
   }
 }
