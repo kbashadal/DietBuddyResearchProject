@@ -77,43 +77,72 @@ class SelectActivityPageState extends State<SelectActivityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue.shade50,
+        backgroundColor: Colors.lightBlue.shade50,
+        elevation: 0, // Added for a flatter appearance
         title: Image.asset(
           'assets/name.png',
-          width: 150,
-          height: 150,
+          width: 120, // Adjusted size for better proportion
+          height: 60, // Adjusted size for better proportion
           fit: BoxFit.contain,
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'Select Activities',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
+        child: Container(
+          padding: const EdgeInsets.all(8.0),
+          child: Card(
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    'Select Activities',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          Colors.deepPurple, // Added color for a vibrant look
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Divider(
+                  thickness: 2,
+                  indent: 20,
+                  endIndent: 20,
+                  color: Colors
+                      .deepPurple.shade200, // Added color to match the theme
+                ),
+                ...activities
+                    .map((activity) => CheckboxListTile(
+                          title: Text(activity),
+                          value: _selectedActivities.contains(activity),
+                          onChanged: (bool? selected) {
+                            _toggleActivity(activity);
+                          },
+                          checkColor:
+                              Colors.white, // Added for better visibility
+                          activeColor:
+                              Colors.deepPurple, // Added to match the theme
+                        ))
+                    .toList(),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _navigateToNextPage(context),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.deepPurple, // Button color
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32.0, vertical: 16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  ),
+                  child: const Text('Next'),
+                ),
+              ],
             ),
-            const Divider(
-                thickness: 2, indent: 20, endIndent: 20, color: Colors.grey),
-            ...activities
-                .map((activity) => CheckboxListTile(
-                      title: Text(activity),
-                      value: _selectedActivities.contains(activity),
-                      onChanged: (bool? selected) {
-                        _toggleActivity(activity);
-                      },
-                    ))
-                .toList(),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _navigateToNextPage(context),
-              child: const Text('Next'),
-            ),
-          ],
+          ),
         ),
       ),
     );

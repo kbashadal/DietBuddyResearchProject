@@ -46,17 +46,19 @@ class DemographicPageState extends State<DemographicPage> {
 
   Widget _buildDemographicForm() {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'Demographic Information',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+        const Text(
+          'Demographic Information',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.deepPurple,
           ),
+          textAlign: TextAlign.center,
         ),
         const Divider(
-            thickness: 2, indent: 20, endIndent: 20, color: Colors.grey),
+            thickness: 2, indent: 20, endIndent: 20, color: Colors.deepPurple),
         const SizedBox(height: 10),
         _buildAgeField(),
         const SizedBox(height: 10),
@@ -74,14 +76,31 @@ class DemographicPageState extends State<DemographicPage> {
   Widget _buildAgeField() {
     return TextFormField(
       controller: _ageController,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Age',
-        border: OutlineInputBorder(),
-        suffixIcon: Icon(Icons.cake),
+        hintText: 'Enter your age',
+        border: const OutlineInputBorder(),
+        suffixIcon: const Icon(Icons.cake),
         fillColor: Colors.white,
         filled: true,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade200, width: 2.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade500, width: 2.0),
+        ),
       ),
       keyboardType: TextInputType.number,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your age';
+        }
+        final n = int.tryParse(value);
+        if (n == null || n <= 0) {
+          return 'Please enter a valid age';
+        }
+        return null;
+      },
     );
   }
 
@@ -91,15 +110,22 @@ class DemographicPageState extends State<DemographicPage> {
       items: const <DropdownMenuItem<String>>[
         DropdownMenuItem(value: 'Male', child: Text('Male')),
         DropdownMenuItem(value: 'Female', child: Text('Female')),
+        DropdownMenuItem(value: 'Other', child: Text('Other')), // Added option
       ],
       onChanged: (newValue) {
         setState(() => _selectedGender = newValue!);
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Gender',
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
         fillColor: Colors.white,
         filled: true,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade200, width: 2.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade500, width: 2.0),
+        ),
       ),
     );
   }
@@ -107,35 +133,80 @@ class DemographicPageState extends State<DemographicPage> {
   Widget _buildHeightField() {
     return TextFormField(
       controller: _heightController,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Height (cm)',
-        suffixIcon: Icon(Icons.straighten),
-        border: OutlineInputBorder(),
+        hintText: 'Enter your height in cm',
+        border: const OutlineInputBorder(),
+        suffixIcon: const Icon(Icons.straighten),
         fillColor: Colors.white,
         filled: true,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade200, width: 2.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade500, width: 2.0),
+        ),
       ),
       keyboardType: TextInputType.number,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your height';
+        }
+        final n = double.tryParse(value);
+        if (n == null || n <= 0) {
+          return 'Please enter a valid height';
+        }
+        return null;
+      },
     );
   }
 
   Widget _buildWeightField() {
     return TextFormField(
       controller: _weightController,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Weight (kg)',
-        suffixIcon: Icon(Icons.monitor_weight),
-        border: OutlineInputBorder(),
+        hintText: 'Enter your weight in kg',
+        border: const OutlineInputBorder(),
+        suffixIcon: const Icon(Icons.monitor_weight),
         fillColor: Colors.white,
         filled: true,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade200, width: 2.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.lightBlue.shade500, width: 2.0),
+        ),
       ),
       keyboardType: TextInputType.number,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your weight';
+        }
+        final n = double.tryParse(value);
+        if (n == null || n <= 0) {
+          return 'Please enter a valid weight';
+        }
+        return null;
+      },
     );
   }
 
   Widget _buildNextButton() {
     return ElevatedButton(
       onPressed: _onNextPressed,
-      child: const Text('Next'),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.deepPurple, // Button color
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+      ),
+      child: const Text(
+        'Next',
+        style: TextStyle(fontSize: 18),
+      ),
     );
   }
 
@@ -164,11 +235,25 @@ class DemographicPageState extends State<DemographicPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: _buildAppBar(),
+        backgroundColor: Colors.lightBlue.shade50,
+        title: Image.asset(
+          'assets/name.png',
+          width: 120,
+          height: 120,
+          fit: BoxFit.contain,
+        ),
+        centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: _buildDemographicForm(),
+        color: Colors.lightBlue.shade50,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: _buildDemographicForm(),
+          ),
+        ),
       ),
     );
   }

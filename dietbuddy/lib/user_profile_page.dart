@@ -85,13 +85,13 @@ class UserProfilePageState extends State<UserProfilePage> {
   Future<Map<String, dynamic>> _fetchUserProfile() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.email;
-    final response = await http.get(
-      Uri.parse(
-          'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=$userEmail'),
-    );
     // final response = await http.get(
-    //   Uri.parse('http://127.0.0.1:5000/user_profile?email_id=$userEmail'),
+    //   Uri.parse(
+    //       'https://dietbuddyresearchproject.onrender.com/user_profile?email_id=$userEmail'),
     // );
+    final response = await http.get(
+      Uri.parse('http://127.0.0.1:5000/user_profile?email_id=$userEmail'),
+    );
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
@@ -123,7 +123,7 @@ class UserProfilePageState extends State<UserProfilePage> {
               if (snapshot.hasData) {
                 _fullNameController.text = snapshot.data!['full_name'];
                 _emailController.text = snapshot.data!['email_id'];
-                _dateOfBirthController.text = snapshot.data!['date_of_birth'];
+                _dateOfBirthController.text = snapshot.data!['age'].toString();
                 _heightController.text = snapshot.data!['height'].toString();
                 _weightController.text = snapshot.data!['weight'].toString();
                 _targetCaloriesController.text =
@@ -132,11 +132,11 @@ class UserProfilePageState extends State<UserProfilePage> {
                     snapshot.data!['activity_level'].toString();
                 _targetWeightController.text =
                     snapshot.data!['target_weight'].toString();
-                _durationController.text =
-                    snapshot.data!['duration'].toString();
+                // _durationController.text =
+                //     snapshot.data!['duration'].toString();
                 _bmiController.text = snapshot.data!['bmi'].toString();
                 _bmiCategoryController.text = snapshot.data!['bmi_category'];
-                _selectedDate = DateTime.parse(snapshot.data!['date_of_birth']);
+                // _selectedDate = DateTime.parse(snapshot.data!['date_of_birth']);
                 return SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -179,20 +179,14 @@ class UserProfilePageState extends State<UserProfilePage> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              ListTile(
-                                title: const Text('Date of Birth'),
-                                subtitle: Text(
-                                  _selectedDate
-                                      .toLocal()
-                                      .toString()
-                                      .split(' ')[0],
-                                ),
-                                trailing: const Icon(Icons.calendar_today),
-                                onTap: () => _pickDate(context),
-                                shape: RoundedRectangleBorder(
-                                  side: const BorderSide(
-                                      color: Colors.grey, width: 1),
-                                  borderRadius: BorderRadius.circular(4),
+                              TextFormField(
+                                controller: _dateOfBirthController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Age',
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: Icon(Icons.cake),
+                                  fillColor: Colors.white,
+                                  filled: true,
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -328,18 +322,18 @@ class UserProfilePageState extends State<UserProfilePage> {
                               const SizedBox(height: 10),
                               Row(
                                 children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: _durationController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Duration (Weeks)',
-                                        border: OutlineInputBorder(),
-                                        suffixIcon: Icon(Icons.calendar_today),
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                      ),
-                                    ),
-                                  ),
+                                  // Expanded(
+                                  //   child: TextFormField(
+                                  //     controller: _durationController,
+                                  //     decoration: const InputDecoration(
+                                  //       labelText: 'Duration (Weeks)',
+                                  //       border: OutlineInputBorder(),
+                                  //       suffixIcon: Icon(Icons.calendar_today),
+                                  //       fillColor: Colors.white,
+                                  //       filled: true,
+                                  //     ),
+                                  //   ),
+                                  // ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: TextFormField(
@@ -504,10 +498,8 @@ class UserProfilePageState extends State<UserProfilePage> {
     final userTargetWeight = (_targetWeightController.text);
     final userBMI = (_bmiController.text);
     final userBMIcategory = (_bmiCategoryController.text);
-    // const api =
-    //     'http://127.0.0.1:5000/update_user_profile'; // Replace with your actual API URL
     const api =
-        'https://dietbuddyresearchproject.onrender.com/update_user_profile';
+        'http://127.0.0.1:5000/update_user_profile'; // Replace with your actual API URL
     final body = jsonEncode({
       'emailId': userEmail,
       'fullName': userFullName,

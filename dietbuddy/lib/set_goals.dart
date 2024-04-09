@@ -79,139 +79,146 @@ class SetGoalsPageState extends State<SetGoalsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[50],
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
-          'assets/name.png',
-          width: 150,
-          height: 150,
+          'assets/logo.png', // Assuming a more professional logo asset
+          width: 120, // Adjusted size
+          height: 120, // Adjusted size
           fit: BoxFit.contain,
         ),
         centerTitle: true,
+        elevation: 0, // Remove shadow for a flat design
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            const SizedBox(height: 20),
-            const SizedBox(height: 20),
-
-            // Your existing code here...
-
-            // Add your provided snippet here
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _suggestedCaloriesController,
-                      decoration: InputDecoration(
-                        labelText: 'Suggested Calories',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: _isEditable ? null : const Icon(Icons.lock),
-                        fillColor: Colors.white,
-                        filled: true,
-                      ),
-                      readOnly: !_isEditable,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _isEditable = true;
-                      });
-                    },
-                    child: const Text('Edit'),
-                  ),
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Divider(
-                      color: Colors.grey,
-                      thickness: 1,
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      'Set Goal (Optional)',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: Colors.grey,
-                      thickness: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Card(
-              color: Colors.transparent,
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 160, // Adjusted width for side by side layout
-                      child: TextFormField(
-                        controller: _targetWeightController,
-                        decoration: const InputDecoration(
-                          labelText: 'Target Wt (kg)',
-                          border: OutlineInputBorder(),
-                          suffixIcon: Icon(Icons.fitness_center),
-                          fillColor: Colors.white,
-                          filled: true,
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // SizedBox(
-                    //   width: 160, // Adjusted width for side by side layout
-                    //   child: TextFormField(
-                    //     controller: _durationController,
-                    //     decoration: const InputDecoration(
-                    //       labelText: 'Duration (wks)',
-                    //       border: OutlineInputBorder(),
-                    //       suffixIcon: Icon(Icons.calendar_today),
-                    //       fillColor: Colors.white,
-                    //       filled: true,
-                    //     ),
-                    //     keyboardType: TextInputType.number,
-                    //   ),
-                    // ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _registerUser,
-              child: const Text('Register'),
-            ),
-            ElevatedButton(
-              onPressed: _onUpdateSuggestedCalories,
-              child: const Text('Update Suggested Calories'),
-            ),
-            const SizedBox(height: 20),
-
-            // Continue with any additional code...
-          ],
+        child: Container(
+          color: Colors.white, // Using a clean white background
+          padding:
+              const EdgeInsets.all(20.0), // Adjusted padding for more space
+          child: Column(
+            children: <Widget>[
+              const SizedBox(height: 20),
+              _buildSuggestedCaloriesField(),
+              const SizedBox(height: 20),
+              _buildDividerWithText('Set Your Goal'),
+              const SizedBox(height: 20),
+              _buildTargetWeightField(),
+              const SizedBox(height: 40),
+              _buildRegisterButton(),
+              const SizedBox(height: 20),
+              _buildUpdateSuggestedCaloriesButton(),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestedCaloriesField() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: _suggestedCaloriesController,
+            decoration: InputDecoration(
+              labelText: 'Suggested Calories',
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              suffixIcon: _isEditable
+                  ? const Icon(Icons.edit)
+                  : const Icon(Icons.lock_outline),
+              fillColor: Colors.grey[200], // Light grey fill for subtle look
+              filled: true,
+            ),
+            readOnly: !_isEditable,
+            keyboardType: TextInputType.number,
+          ),
+        ),
+        IconButton(
+          icon: Icon(_isEditable ? Icons.lock : Icons.edit,
+              color: Colors.indigo), // Matching icon color with app theme
+          onPressed: () {
+            setState(() {
+              _isEditable = !_isEditable;
+            });
+          },
+          tooltip: _isEditable ? 'Lock' : 'Edit',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDividerWithText(String text) {
+    return Row(
+      children: <Widget>[
+        const Expanded(
+          child: Divider(),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.indigo, // Using theme color for text
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const Expanded(
+          child: Divider(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTargetWeightField() {
+    return TextFormField(
+      controller: _targetWeightController,
+      decoration: InputDecoration(
+        labelText: 'Target Weight (kg)',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        suffixIcon: const Icon(Icons.fitness_center,
+            color: Colors.indigo), // Icon color
+        fillColor: Colors.grey[200], // Consistent with other fields
+        filled: true,
+      ),
+      keyboardType: TextInputType.number,
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return ElevatedButton(
+      onPressed: _registerUser,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.indigo, // Updated button color to match theme
+        padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25.0),
+        ),
+      ),
+      child: const Text(
+        'Register',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildUpdateSuggestedCaloriesButton() {
+    return ElevatedButton(
+      onPressed: _onUpdateSuggestedCalories,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.indigo.shade700,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25.0),
+        ),
+      ),
+      child: const Text(
+        'Update Calories',
+        style: TextStyle(fontSize: 18),
       ),
     );
   }

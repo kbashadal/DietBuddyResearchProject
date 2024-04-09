@@ -433,6 +433,13 @@ def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi,
     - suggested_calories: Estimated daily calories intake to reach the target weight within the specified duration
     """
     # Calculate BMR for the current weight using the Mifflin-St Jeor Equation
+    if target_weight:
+        target_weight=float(target_weight)
+        weight_kg=float(target_weight)
+    else:
+        target_weight=float(weight_kg)
+        weight_kg=float(weight_kg)
+    print("target_weight",target_weight)
     if gender == 'Male':
         bmr_current = (10 * float(weight_kg)) + (6.25 * float(height_cm)) - (5 * age) + 5
     else:  # female
@@ -478,6 +485,7 @@ def calculate_suggested_calories(age, gender, weight_kg, height_cm, bmi,
 @app.route('/update_user_profile', methods=['POST'])
 def update_user_profile():
     data = request.json  # Get the JSON data sent to the endpoint
+    print("data",data)
     
     # Extract user identification and profile update data
     
@@ -498,19 +506,20 @@ def update_user_profile():
     if 'weight' in data:
         user.weight = float(data['weight'])
     if 'dateOfBirth' in data:
-        user.date_of_birth = data['dateOfBirth']
-        print("data['dateOfBirth']",data['dateOfBirth'])
-        age = (datetime.datetime.today().date() - datetime.datetime.strptime(data['dateOfBirth'], '%Y-%m-%d').date()).days // 365
+        user.age = float(data['dateOfBirth'])
+        # user.date_of_birth = data['dateOfBirth']
+        # print("data['dateOfBirth']",data['dateOfBirth'])
+        # age = (datetime.datetime.today().date() - datetime.datetime.strptime(data['dateOfBirth'], '%Y-%m-%d').date()).days // 365
     if 'gender' in data:
         user.gender = data['gender']
     if 'activityLevel' in data:
         user.activity_level = data['activityLevel']
-    if 'duration' in data:
-        user.duration = data['duration']
+    # if 'duration' in data:
+    #     user.duration = data['duration']
     if 'targetWeight' in data:
         user.target_weight = data['targetWeight']
     if 'suggestedCalories' in data:
-        suggested_calories = calculate_suggested_calories(age=age, gender=user.gender, weight_kg=data['weight'], height_cm=float(float(data['height'])), bmi=user.bmi, activity_level=data['activityLevel'], target_weight=data['targetWeight'], targetedDuration=data['duration'])        
+        suggested_calories = calculate_suggested_calories(age=user.age, gender=user.gender, weight_kg=data['weight'], height_cm=float(float(data['height'])), bmi=user.bmi, activity_level=data['activityLevel'], target_weight=data['targetWeight'], targetedDuration=data['duration'])        
         print("suggested_calories",suggested_calories)
         user.suggested_calories = suggested_calories
     if 'bmi' in data:
@@ -1174,6 +1183,8 @@ def get_user_profile():
         'suggested_calories': round(user.suggested_calories,2),
         'activity_level': user.activity_level,
         'target_weight': user.target_weight,
+        'age': user.age,
+        'gender': user.gender,
         # 'duration': int(user.duration),
     }
 

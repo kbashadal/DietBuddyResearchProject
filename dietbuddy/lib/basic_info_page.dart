@@ -94,17 +94,17 @@ class BasicInfoPageState extends State<BasicInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[50],
+        backgroundColor: Colors.lightBlue.shade50,
         title: Image.asset(
           'assets/name.png',
-          width: 150,
-          height: 150,
+          width: 120,
+          height: 120,
           fit: BoxFit.contain,
         ),
         centerTitle: true,
       ),
       body: Container(
-        color: Colors.blue[50],
+        color: Colors.lightBlue.shade50,
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
         child: SingleChildScrollView(
           child: Column(
@@ -114,15 +114,24 @@ class BasicInfoPageState extends State<BasicInfoPage> {
                 padding: EdgeInsets.all(8.0),
                 child: Text(
                   'Basic Info',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple, // Changed for a splash of color
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
               const Divider(
-                  thickness: 2, indent: 20, endIndent: 20, color: Colors.grey),
+                thickness: 2,
+                indent: 20,
+                endIndent: 20,
+                color: Colors.deepPurple, // Matching the text color
+              ),
               Card(
-                color: Colors.transparent,
-                elevation: 0,
+                color: Colors.white, // Changed for better visibility
+                elevation: 5, // Added shadow for depth
+                margin: const EdgeInsets.all(8.0), // Margin for spacing
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: _buildInfoSection(),
@@ -132,13 +141,18 @@ class BasicInfoPageState extends State<BasicInfoPage> {
               ElevatedButton(
                 onPressed: _onNextButtonPressed,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.deepPurple, // Button color
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32.0, vertical: 16.0),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0)),
-                  padding: const EdgeInsets.symmetric(vertical: 15.0),
-                  textStyle: const TextStyle(fontSize: 18),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
                 ),
-                child: const Text('Next'),
+                child: const Text(
+                  'Next',
+                  style: TextStyle(fontSize: 18),
+                ),
               ),
             ],
           ),
