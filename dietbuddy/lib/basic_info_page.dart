@@ -94,7 +94,7 @@ class BasicInfoPageState extends State<BasicInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.lightBlue.shade50,
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
           'assets/name.png',
           width: 120,

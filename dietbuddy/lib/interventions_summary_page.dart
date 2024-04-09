@@ -106,13 +106,12 @@ class InterventionsSummaryPageState extends State<InterventionsSummaryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'DietBuddy',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.green, // Adjust the color to match your branding
-          ),
+        backgroundColor: Colors.indigo, // Updated color for a professional look
+        title: Image.asset(
+          'assets/name.png',
+          width: 200,
+          height: 200,
+          fit: BoxFit.contain,
         ),
       ),
       body: ListView(

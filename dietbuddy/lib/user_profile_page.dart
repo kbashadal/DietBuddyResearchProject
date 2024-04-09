@@ -104,7 +104,7 @@ class UserProfilePageState extends State<UserProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[50], // Changed to a more academic color
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
           'assets/name.png', // Changed asset name for a more academic look
           width: 150, // Adjusted size for a more refined look
@@ -361,14 +361,22 @@ class UserProfilePageState extends State<UserProfilePage> {
                                       SystemNavigator.pop();
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      backgroundColor: Colors.deepPurple,
+                                      elevation: 5, // Shadow depth
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
+                                        borderRadius: BorderRadius.circular(
+                                            12.0), // Softer roundness
                                       ),
                                       padding: const EdgeInsets.symmetric(
-                                          vertical: 15.0, horizontal: 30.0),
-                                      textStyle: const TextStyle(fontSize: 18),
+                                          vertical: 12.0,
+                                          horizontal:
+                                              40.0), // Adjusted padding for better fit
+                                      textStyle: const TextStyle(
+                                        fontSize: 16, // Slightly smaller text
+                                        fontWeight: FontWeight
+                                            .bold, // Bold text for emphasis
+                                      ),
                                     ),
                                     child: const Text('Log Off'),
                                   ),
@@ -401,18 +409,30 @@ class UserProfilePageState extends State<UserProfilePage> {
                                         const SnackBar(
                                           content: Text(
                                               'Profile updated successfully'),
+                                          backgroundColor: Colors
+                                              .green, // Added background color for SnackBar
                                         ),
                                       );
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      backgroundColor: Colors.deepPurple,
+                                      elevation:
+                                          4, // Adjusted elevation for a subtle shadow
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
+                                        borderRadius: BorderRadius.circular(
+                                            12.0), // Adjusted border radius for consistency
                                       ),
                                       padding: const EdgeInsets.symmetric(
-                                          vertical: 15.0, horizontal: 30.0),
-                                      textStyle: const TextStyle(fontSize: 18),
+                                          vertical: 12.0,
+                                          horizontal:
+                                              36.0), // Adjusted padding for aesthetics
+                                      textStyle: const TextStyle(
+                                        fontSize:
+                                            16, // Adjusted font size for readability
+                                        fontWeight: FontWeight
+                                            .bold, // Maintained bold font weight for emphasis
+                                      ),
                                     ),
                                     child: const Text('Update Profile'),
                                   ),

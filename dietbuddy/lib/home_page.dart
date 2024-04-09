@@ -15,7 +15,7 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[50], // Added background color
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
           'assets/name.png',
           width: 200,

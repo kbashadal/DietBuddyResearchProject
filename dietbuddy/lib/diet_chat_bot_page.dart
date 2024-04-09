@@ -105,12 +105,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(
-          0,
-          166,
-          126,
-          1,
-        ),
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: const Text(
           'GPT Chat',
           style: TextStyle(

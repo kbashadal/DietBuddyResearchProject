@@ -81,7 +81,7 @@ class SetGoalsPageState extends State<SetGoalsPage> {
       appBar: AppBar(
         backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
-          'assets/logo.png', // Assuming a more professional logo asset
+          'assets/name.png', // Assuming a more professional logo asset
           width: 120, // Adjusted size
           height: 120, // Adjusted size
           fit: BoxFit.contain,

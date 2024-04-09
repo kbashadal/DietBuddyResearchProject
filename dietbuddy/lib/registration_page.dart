@@ -122,7 +122,7 @@ class RegistrationPageState extends State<RegistrationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[50], // Changed to a more academic color
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
           'assets/name.png', // Changed asset name for a more academic look
           width: 150, // Adjusted size for a more refined look

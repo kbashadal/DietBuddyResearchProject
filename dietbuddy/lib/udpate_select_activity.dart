@@ -49,12 +49,13 @@ class UpdateActivitySelectionPageState
         selectedActivities = List<String>.from(
             activitiesList.map((activity) => activity.toString()));
       });
+      finalSelectedActivities.addAll(selectedActivities);
     }
     try {
-      // final response = await http.get(Uri.parse(
-      //     'https://dietbuddyresearchproject.onrender.com/fetch_all_exercises'));
-      final response = await http
-          .get(Uri.parse('http://127.0.0.1:5000/fetch_all_exercises'));
+      final response = await http.get(Uri.parse(
+          'https://dietbuddyresearchproject.onrender.com/fetch_all_exercises'));
+      // final response = await http
+      //     .get(Uri.parse('http://127.0.0.1:5000/fetch_all_exercises'));
       if (response.statusCode == 200) {
         final List<dynamic> decodedBody = json.decode(response.body);
         setState(() {
@@ -75,7 +76,7 @@ class UpdateActivitySelectionPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.lightBlue.shade50,
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         elevation: 0, // Added for a flatter appearance
         title: Image.asset(
           'assets/name.png',
@@ -112,10 +113,23 @@ class UpdateActivitySelectionPageState
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
-                onPressed: () => _updateActivities(),
+                onPressed: finalSelectedActivities.length >= 3
+                    ? () => _updateActivities()
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Please select at least 3 activities to update.',
+                            ),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }, // Condition and message added here
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  backgroundColor: Colors.deepPurple, // Button color
+                  backgroundColor: finalSelectedActivities.length >= 3
+                      ? Colors.deepPurple // Button color when condition is met
+                      : Colors.grey, // Button color when condition is not met
                   padding: const EdgeInsets.symmetric(
                       horizontal: 32.0, vertical: 16.0),
                   shape: RoundedRectangleBorder(

@@ -77,7 +77,7 @@ class SelectActivityPageState extends State<SelectActivityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.lightBlue.shade50,
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         elevation: 0, // Added for a flatter appearance
         title: Image.asset(
           'assets/name.png',
@@ -128,10 +128,24 @@ class SelectActivityPageState extends State<SelectActivityPage> {
                     .toList(),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => _navigateToNextPage(context),
+                  onPressed: _selectedActivities.length >= 3
+                      ? () => _navigateToNextPage(context)
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please select atleast 3 activities to proceed.',
+                              ),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }, // Condition and message added here
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    backgroundColor: Colors.deepPurple, // Button color
+                    backgroundColor: _selectedActivities.length >= 3
+                        ? Colors
+                            .deepPurple // Button color when condition is met
+                        : Colors.grey, // Button color when condition is not met
                     padding: const EdgeInsets.symmetric(
                         horizontal: 32.0, vertical: 16.0),
                     shape: RoundedRectangleBorder(

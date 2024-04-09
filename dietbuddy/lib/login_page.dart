@@ -98,7 +98,7 @@ class LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0, // Remove shadow for a cleaner look
-        backgroundColor: Colors.transparent, // Make AppBar transparent
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
           'assets/name.png', // Assuming 'logo.png' is a more professional asset name
           width: 120, // Slightly reduced for elegance
@@ -162,7 +162,9 @@ class LoginPageState extends State<LoginPage> {
               ElevatedButton(
                 onPressed: loginUser,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Theme color for consistency
+                  backgroundColor:
+                      Colors.deepPurple, // Theme color for consistency
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),

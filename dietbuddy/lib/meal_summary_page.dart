@@ -96,7 +96,7 @@ class MealSummaryPageState extends State<MealSummaryPage> {
     ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white, // Changed to a more academic color
+        backgroundColor: Colors.indigo, // Updated color for a professional look
         title: Image.asset(
           'assets/name.png', // Changed asset name for a more academic look
           width: 150, // Adjusted size for a more refined look
