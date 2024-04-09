@@ -626,10 +626,10 @@ class AddEntryPageState extends State<AddEntryPage> {
   }
 
   Future<void> fetchCategories() async {
-    // final response = await http.get(Uri.parse(
-    //     'https://dietbuddyresearchproject.onrender.com/food_categories'));
-    final response =
-        await http.get(Uri.parse('http://127.0.0.1:5000/food_categories'));
+    final response = await http.get(Uri.parse(
+        'https://dietbuddyresearchproject.onrender.com/food_categories'));
+    // final response =
+    //     await http.get(Uri.parse('http://127.0.0.1:5000/food_categories'));
     if (response.statusCode == 200) {
       final List<dynamic> fetchedCategories = jsonDecode(response.body);
       setState(() {
