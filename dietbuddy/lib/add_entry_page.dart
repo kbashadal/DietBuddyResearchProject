@@ -343,7 +343,9 @@ class AddEntryPageState extends State<AddEntryPage> {
         Provider.of<UserProvider>(context, listen: false).email!;
     final response = await http.post(
       Uri.parse(
-          'https://dietbuddyresearchproject.onrender.com/suggestExerciseWithTime'),
+          // 'https://dietbuddyresearchproject.onrender.com/suggestExerciseWithTime'),
+          'https://dietbuddyresearchproject.onrender.com/suggestExerciseWithDiffModel'),
+
       // 'http://127.0.0.1:5000/suggestExerciseWithDiffModel'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(

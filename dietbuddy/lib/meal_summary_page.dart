@@ -36,6 +36,8 @@ class MealSummaryPageState extends State<MealSummaryPage> {
   Future<void> _fetchUserProfile() async {
     const url =
         'https://dietbuddyresearchproject.onrender.com/user_profile'; // Adjust the URL as needed
+    // const url =
+    //     'http://127.0.0.1:5000/user_profile'; // Adjust the URL as needed
     try {
       final response = await http.get(
         Uri.parse('$url?email_id=${widget.email}'),
